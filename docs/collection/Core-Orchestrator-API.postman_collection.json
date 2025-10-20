@@ -1,0 +1,293 @@
+{
+	"info": {
+		"_postman_id": "core-orchestrator-api",
+		"name": "Core Orchestrator API - Complete",
+		"description": "Collection completa de requisições para a API Core Orchestrator Service - Sistema de Registro de Propriedades com Blockchain",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": "2.0.0"
+	},
+	"item": [
+		{
+			"name": "Authentication & Users",
+			"item": [
+				{
+					"name": "Register User (Normal)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha123\",\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\"\n}"
+					},
+						"url": {
+							"raw": "{{base_url}}/api/users/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "register"]
+						},
+						"description": "Registra um novo usuário normal (role: USER). Se o campo 'role' não for informado, o padrão é USER."
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n  \"name\": \"Maria Admin\",\n  \"email\": \"maria@admin.com\",\n  \"password\": \"senha123\",\n  \"walletAddress\": \"0x1234567890abcdef1234567890abcdef12345678\",\n  \"role\": \"ADMIN\"\n}"
+					},
+						"url": {
+							"raw": "{{base_url}}/api/users/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "register"]
+						},
+						"description": "Registra um novo usuário com role ADMIN."
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "login"]
+						},
+						"description": "Faz login com email e senha. Retorna os dados do usuário incluindo o role."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin (Default)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@core-orchestrator.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "login"]
+						},
+						"description": "Login com o usuário admin padrão criado automaticamente ao iniciar a aplicação."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados a autenticação e gerenciamento de usuários."
+		},
+		{
+			"name": "Property Management",
+			"item": [
+				{
+					"name": "Register Property",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"matriculaId\": 123456,\n  \"folha\": 100,\n  \"comarca\": \"São Paulo\",\n  \"endereco\": \"Rua Example, 123 - Centro\",\n  \"metragem\": 250,\n  \"proprietario\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\",\n  \"matriculaOrigem\": null,\n  \"tipo\": \"URBANO\",\n  \"isRegular\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/properties/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "properties", "register"]
+						},
+						"description": "Registra uma nova propriedade no sistema. O proprietário deve ser um endereço Ethereum válido (0x...)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Property by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/properties/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "properties", "1"]
+						},
+						"description": "Busca uma propriedade específica por ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Properties",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/properties",
+							"host": ["{{base_url}}"],
+							"path": ["api", "properties"]
+						},
+						"description": "Lista todas as propriedades registradas no sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Properties by Owner",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/properties/by-proprietario/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+							"host": ["{{base_url}}"],
+							"path": [
+								"api",
+								"properties",
+								"by-proprietario",
+								"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+							]
+						},
+						"description": "Busca todas as propriedades de um proprietário específico (endereço Ethereum)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gerenciamento de propriedades: registro, consulta e listagem."
+		},
+		{
+			"name": "Property Transfer",
+			"item": [
+				{
+					"name": "Initiate Transfer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"propertyId\": 1,\n  \"fromProprietario\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\",\n  \"toProprietario\": \"0x123d35Cc6634C0532925a3b844Bc9e7595f0aaa\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/property-transfers/initiate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "property-transfers", "initiate"]
+						},
+						"description": "Inicia uma transferência de propriedade.\n\nRegras:\n- Propriedade deve existir\n- fromProprietario deve ser o dono atual\n- Propriedade NÃO pode ter transferência ativa (PENDING ou APPROVED)\n\nRetorna 409 CONFLICT se já houver transferência ativa."
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Transfer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/property-transfers/1/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "property-transfers", "1", "approve"]
+						},
+						"description": "Aprova uma transferência pendente. Muda status de PENDING para APPROVED."
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Transfer (Blockchain)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"blockchainTxHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/property-transfers/1/complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "property-transfers", "1", "complete"]
+						},
+						"description": "Completa a transferência após registro na blockchain.\n\nO que acontece:\n1. Transferência muda para status COMPLETED\n2. Proprietário da propriedade é atualizado\n3. Hash da transação blockchain é salvo"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Transfers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/property-transfers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "property-transfers"]
+						},
+						"description": "Lista todas as transferências de propriedades do sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transfers by Property",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/property-transfers/by-property/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "property-transfers", "by-property", "1"]
+						},
+						"description": "Lista todo o histórico de transferências de uma propriedade específica (incluindo PENDING, APPROVED, COMPLETED, etc)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gerenciamento de transferências de propriedades.\n\nFluxo completo:\n1. Initiate Transfer (cria com status PENDING)\n2. Approve Transfer (muda para APPROVED)\n3. Complete Transfer (registra na blockchain e muda para COMPLETED)"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

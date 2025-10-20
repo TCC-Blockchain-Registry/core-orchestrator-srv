@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: core-orchestrator-srv
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.core: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.boot.autoconfigure: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation: DEBUG

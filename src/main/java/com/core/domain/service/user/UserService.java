@@ -1,0 +1,111 @@
+package com.core.domain.service.user;
+
+import com.core.domain.model.user.UserModel;
+import com.core.domain.model.user.UserRole;
+import com.core.port.input.user.UserUseCase;
+import com.core.port.output.user.UserRepositoryPort;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+/**
+ * User Domain Service
+ * Implements business logic for user operations
+ */
+@Service
+public class UserService implements UserUseCase {
+    
+    private static final Pattern EMAIL_PATTERN = 
+        Pattern.compile("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$");
+    
+    private final UserRepositoryPort userRepositoryPort;
+    private final PasswordEncoder passwordEncoder;
+    
+    public UserService(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
+        this.userRepositoryPort = userRepositoryPort;
+        this.passwordEncoder = passwordEncoder;
+    }
+    
+    @Override
+    public UserModel registerUser(String name, String email, String password, String walletAddress, UserRole role) {
+        // Validate input parameters
+        validateUserInput(name, email, password, walletAddress);
+        
+        // Check if user already exists
+        Optional<UserModel> existingUser = userRepositoryPort.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException("User with email " + email + " already exists");
+        }
+        
+        // Default to USER role if not specified
+        UserRole userRole = (role != null) ? role : UserRole.USER;
+        
+        // Encrypt password
+        String encryptedPassword = passwordEncoder.encode(password);
+        
+        // Create new user with encrypted password
+        UserModel newUser = new UserModel(name, email, encryptedPassword, walletAddress, userRole);
+        
+        // Save and return
+        return userRepositoryPort.save(newUser);
+    }
+    
+    @Override
+    public UserModel loginUser(String email, String password) {
+        // Validate input
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty");
+        }
+        
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+        
+        // Find user by email
+        Optional<UserModel> userOptional = userRepositoryPort.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+        
+        UserModel user = userOptional.get();
+        
+        // Check if user is active
+        if (!user.getActive()) {
+            throw new IllegalArgumentException("User account is inactive");
+        }
+        
+        // Verify password using BCrypt
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+        
+        return user;
+    }
+    
+    private void validateUserInput(String name, String email, String password, String walletAddress) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+        
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty");
+        }
+        
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long");
+        }
+        
+        // Validate wallet address if provided
+        if (walletAddress != null && !walletAddress.trim().isEmpty()) {
+            if (!walletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
+                throw new IllegalArgumentException("Invalid Ethereum wallet address format");
+            }
+        }
+    }
+}

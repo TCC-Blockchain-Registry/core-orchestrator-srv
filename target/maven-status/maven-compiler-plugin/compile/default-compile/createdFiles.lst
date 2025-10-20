@@ -1,0 +1,16 @@
+com/core/adapter/output/persistence/user/UserRepositoryAdapter.class
+com/core/domain/model/user/UserModel.class
+com/core/adapter/output/persistence/user/mapper/UserPersistenceMapper.class
+com/core/port/input/user/UserUseCase.class
+com/core/adapter/input/rest/user/UserController.class
+com/core/adapter/input/rest/user/dto/UserRegistrationRequest.class
+com/core/adapter/input/rest/user/swagger/UserSwaggerApi.class
+com/core/domain/service/user/UserService.class
+com/core/port/output/user/UserRepositoryPort.class
+com/core/config/SwaggerConfig.class
+com/core/adapter/input/rest/user/dto/UserRegistrationResponse.class
+com/core/adapter/input/rest/health/swagger/HealthSwaggerApi.class
+com/core/config/HibernateConfig.class
+com/core/adapter/input/rest/health/HealthController.class
+com/core/Application.class
+com/core/adapter/output/persistence/user/entity/UserEntity.class
