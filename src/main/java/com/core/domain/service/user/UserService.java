@@ -29,24 +29,24 @@ public class UserService implements UserUseCase {
     }
     
     @Override
-    public UserModel registerUser(String name, String email, String password, String walletAddress, UserRole role) {
+    public UserModel registerUser(String name, String email, String cpf, String password, String walletAddress, UserRole role) {
         // Validate input parameters
         validateUserInput(name, email, password, walletAddress);
-        
+
         // Check if user already exists
         Optional<UserModel> existingUser = userRepositoryPort.findByEmail(email);
         if (existingUser.isPresent()) {
             throw new IllegalArgumentException("User with email " + email + " already exists");
         }
-        
+
         // Default to USER role if not specified
         UserRole userRole = (role != null) ? role : UserRole.USER;
-        
+
         // Encrypt password
         String encryptedPassword = passwordEncoder.encode(password);
-        
+
         // Create new user with encrypted password
-        UserModel newUser = new UserModel(name, email, encryptedPassword, walletAddress, userRole);
+        UserModel newUser = new UserModel(name, email, cpf, encryptedPassword, walletAddress, userRole);
         
         // Save and return
         return userRepositoryPort.save(newUser);
@@ -83,7 +83,46 @@ public class UserService implements UserUseCase {
         
         return user;
     }
-    
+
+    @Override
+    public UserModel updateWalletAddress(String userId, String walletAddress) {
+        // Validate input
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be empty");
+        }
+
+        if (walletAddress == null || walletAddress.trim().isEmpty()) {
+            throw new IllegalArgumentException("Wallet address cannot be empty");
+        }
+
+        // Validate wallet address format
+        if (!walletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
+            throw new IllegalArgumentException("Invalid Ethereum wallet address format");
+        }
+
+        // Convert userId from String to Long
+        Long userIdLong;
+        try {
+            userIdLong = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid user ID format");
+        }
+
+        // Find user by ID
+        Optional<UserModel> userOptional = userRepositoryPort.findById(userIdLong);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        UserModel user = userOptional.get();
+
+        // Update wallet address
+        user.setWalletAddress(walletAddress);
+
+        // Save and return updated user
+        return userRepositoryPort.save(user);
+    }
+
     private void validateUserInput(String name, String email, String password, String walletAddress) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty");

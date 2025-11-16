@@ -2,11 +2,14 @@ package com.core.domain.service.property;
 
 import com.core.domain.model.property.PropertyModel;
 import com.core.domain.model.property.PropertyType;
+import com.core.domain.model.user.UserModel;
 import com.core.port.input.property.PropertyUseCase;
 import com.core.port.output.property.PropertyRepositoryPort;
+import com.core.port.output.user.UserRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Collections;
 
 /**
  * Property Domain Service
@@ -14,11 +17,14 @@ import java.util.List;
  */
 @Service
 public class PropertyService implements PropertyUseCase {
-    
+
     private final PropertyRepositoryPort propertyRepositoryPort;
-    
-    public PropertyService(PropertyRepositoryPort propertyRepositoryPort) {
+    private final UserRepositoryPort userRepositoryPort;
+
+    public PropertyService(PropertyRepositoryPort propertyRepositoryPort,
+                          UserRepositoryPort userRepositoryPort) {
         this.propertyRepositoryPort = propertyRepositoryPort;
+        this.userRepositoryPort = userRepositoryPort;
     }
     
     @Override
@@ -80,7 +86,26 @@ public class PropertyService implements PropertyUseCase {
         }
         return propertyRepositoryPort.findByComarca(comarca);
     }
-    
+
+    @Override
+    public List<PropertyModel> getPropertiesByUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+
+        // Find user by ID
+        UserModel user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        // If user has no wallet address, return empty list
+        if (user.getWalletAddress() == null || user.getWalletAddress().trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Find properties by user's wallet address
+        return propertyRepositoryPort.findByProprietario(user.getWalletAddress());
+    }
+
     @Override
     public PropertyModel updateBlockchainTxHash(Long id, String txHash) {
         PropertyModel property = findById(id);

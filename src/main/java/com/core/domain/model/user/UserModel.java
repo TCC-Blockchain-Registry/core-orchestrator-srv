@@ -7,12 +7,13 @@ import java.time.LocalDateTime;
  * Represents a user entity in the domain layer
  */
 public class UserModel {
-    
+
     private Long id;
     private String name;
     private String email;
+    private String cpf;
     private String password;
-    private String walletAddress;  // Endereço da carteira Ethereum (0x...)
+    private String walletAddress;
     private UserRole role;
     private Boolean active;
     private LocalDateTime createdAt;
@@ -27,30 +28,33 @@ public class UserModel {
     }
     
     // Constructor for registration
-    public UserModel(String name, String email, String password, String walletAddress) {
+    public UserModel(String name, String email, String cpf, String password, String walletAddress) {
         this();
         this.name = name;
         this.email = email;
+        this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
     }
-    
+
     // Constructor for registration with role
-    public UserModel(String name, String email, String password, String walletAddress, UserRole role) {
+    public UserModel(String name, String email, String cpf, String password, String walletAddress, UserRole role) {
         this();
         this.name = name;
         this.email = email;
+        this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
         this.role = role;
     }
-    
+
     // Constructor with all fields
-    public UserModel(Long id, String name, String email, String password, String walletAddress,
+    public UserModel(Long id, String name, String email, String cpf, String password, String walletAddress,
                     UserRole role, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.email = email;
+        this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
         this.role = role;
@@ -58,10 +62,10 @@ public class UserModel {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-    
+
     // Business methods
-    public static UserModel registerUser(String name, String email, String password, String walletAddress) {
-        return new UserModel(name, email, password, walletAddress);
+    public static UserModel registerUser(String name, String email, String cpf, String password, String walletAddress) {
+        return new UserModel(name, email, cpf, password, walletAddress);
     }
     
     public void updateName(String name) {
@@ -113,7 +117,15 @@ public class UserModel {
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
     public String getPassword() {
         return password;
     }
