@@ -11,22 +11,20 @@ public class PropertyTransferModel {
     
     private Long id;
     private Long propertyId;
-    private String fromProprietario;  // Wallet address do proprietário atual
-    private String toProprietario;    // Wallet address do novo proprietário
-    private TransferStatus status;     // Status da transferência
-    private String blockchainTxHash;   // Hash da transação na blockchain (preenchido quando COMPLETED)
-    private LocalDateTime completedAt; // Data de conclusão na blockchain
+    private String fromProprietario;
+    private String toProprietario;
+    private TransferStatus status;
+    private String blockchainTxHash;
+    private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
-    // Default constructor
+
     public PropertyTransferModel() {
         this.status = TransferStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    
-    // Constructor with all fields
+
     public PropertyTransferModel(Long id, Long propertyId, String fromProprietario, 
                                 String toProprietario, TransferStatus status, 
                                 String blockchainTxHash, LocalDateTime completedAt,
@@ -41,8 +39,7 @@ public class PropertyTransferModel {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-    
-    // Business methods
+
     public void approve() {
         this.status = TransferStatus.APPROVED;
         this.updatedAt = LocalDateTime.now();
@@ -64,8 +61,7 @@ public class PropertyTransferModel {
         this.completedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    
-    // Getters and Setters
+
     public Long getId() {
         return id;
     }

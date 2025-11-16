@@ -31,15 +31,12 @@ public class PropertyService implements PropertyUseCase {
     public PropertyModel registerProperty(Long matriculaId, Long folha, String comarca,
                                          String endereco, Long metragem, String proprietario,
                                          Long matriculaOrigem, PropertyType tipo, Boolean isRegular) {
-        // Validate input
         validatePropertyInput(matriculaId, folha, comarca, endereco, metragem, proprietario, tipo);
-        
-        // Check if matricula already exists
+
         if (propertyRepositoryPort.findByMatriculaId(matriculaId).isPresent()) {
             throw new IllegalArgumentException("Property with matricula " + matriculaId + " already exists");
         }
-        
-        // Create property model
+
         PropertyModel property = new PropertyModel();
         property.setMatriculaId(matriculaId);
         property.setFolha(folha);
@@ -50,7 +47,7 @@ public class PropertyService implements PropertyUseCase {
         property.setMatriculaOrigem(matriculaOrigem);
         property.setTipo(tipo);
         property.setIsRegular(isRegular != null ? isRegular : true);
-        
+
         return propertyRepositoryPort.save(property);
     }
     
@@ -93,16 +90,13 @@ public class PropertyService implements PropertyUseCase {
             throw new IllegalArgumentException("User ID cannot be null");
         }
 
-        // Find user by ID
         UserModel user = userRepositoryPort.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
-        // If user has no wallet address, return empty list
         if (user.getWalletAddress() == null || user.getWalletAddress().trim().isEmpty()) {
             return Collections.emptyList();
         }
 
-        // Find properties by user's wallet address
         return propertyRepositoryPort.findByProprietario(user.getWalletAddress());
     }
 
@@ -112,39 +106,38 @@ public class PropertyService implements PropertyUseCase {
         property.setBlockchainTxHash(txHash);
         return propertyRepositoryPort.save(property);
     }
-    
+
     private void validatePropertyInput(Long matriculaId, Long folha, String comarca,
                                        String endereco, Long metragem, String proprietario,
                                        PropertyType tipo) {
         if (matriculaId == null) {
             throw new IllegalArgumentException("Matricula ID cannot be null");
         }
-        
+
         if (folha == null) {
             throw new IllegalArgumentException("Folha cannot be null");
         }
-        
+
         if (comarca == null || comarca.trim().isEmpty()) {
             throw new IllegalArgumentException("Comarca cannot be empty");
         }
-        
+
         if (endereco == null || endereco.trim().isEmpty()) {
             throw new IllegalArgumentException("Endereco cannot be empty");
         }
-        
+
         if (metragem == null || metragem <= 0) {
             throw new IllegalArgumentException("Metragem must be greater than 0");
         }
-        
+
         if (proprietario == null || proprietario.trim().isEmpty()) {
             throw new IllegalArgumentException("Proprietario cannot be empty");
         }
-        
-        // Validate Ethereum address format (0x + 40 hex chars)
+
         if (!proprietario.matches("^0x[a-fA-F0-9]{40}$")) {
             throw new IllegalArgumentException("Invalid Ethereum address format for proprietario");
         }
-        
+
         if (tipo == null) {
             throw new IllegalArgumentException("Property type cannot be null");
         }

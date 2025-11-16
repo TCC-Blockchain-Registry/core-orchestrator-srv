@@ -1,8 +1,33 @@
 # Core Orchestrator Service
 
-Projeto Spring Boot com PostgreSQL containerizado usando Docker.
+Backend orchestration service for the property tokenization platform built with Spring Boot and PostgreSQL.
 
-## 🚀 Início Rápido
+## Overview
+
+The Core Orchestrator is the central business logic layer of the property tokenization system. It handles user management, CPF to wallet address mapping, property registration orchestration, and publishes blockchain jobs to RabbitMQ for asynchronous processing.
+
+This service implements hexagonal architecture (ports and adapters) to maintain clean separation between business logic, data persistence, and external integrations.
+
+## Tech Stack
+
+- **Java 21** - Programming language
+- **Spring Boot 3.3.5** - Application framework
+- **PostgreSQL 15** - Relational database
+- **Hibernate 6.4.1** - ORM framework
+- **Spring AMQP** - RabbitMQ integration
+- **JJWT** - JWT token generation and validation
+- **BCrypt** - Password encryption
+- **Maven** - Build tool
+- **Docker & Docker Compose** - Containerization
+- **Swagger/OpenAPI** - API documentation
+
+## Prerequisites
+
+- Docker & Docker Compose (required)
+- Java 21 (for local development)
+- Maven 3.6+ (optional, project uses Maven Wrapper)
+
+## Quick Start
 
 ### Opção 1: Tudo com Docker (Recomendado)
 ```bash
@@ -257,3 +282,72 @@ curl -X POST http://localhost:8080/api/users/login \
 **Nota:** Todas as senhas são automaticamente criptografadas com BCrypt.
 
 📚 **Mais informações:** Veja [docs/ADMIN_USER_GUIDE.md](docs/ADMIN_USER_GUIDE.md)
+
+## Integration with Other Services
+
+The Core Orchestrator integrates with:
+
+1. **PostgreSQL** (port 5432) - User data, CPF to wallet mapping, property metadata
+2. **RabbitMQ** (port 5672) - Publishes blockchain jobs for async processing
+3. **BFF Gateway** (port 4000) - Proxies and aggregates requests from frontend
+
+**Data Flow**:
+```
+Frontend → BFF Gateway → Orchestrator → PostgreSQL (store metadata)
+                                      → RabbitMQ (publish blockchain job)
+```
+
+## API Endpoints
+
+Full API documentation available at: **http://localhost:8080/swagger-ui/index.html** (manual) or **http://localhost:8081/swagger-ui/index.html** (Docker)
+
+### Authentication
+
+- `POST /api/users/register` - Register new user
+- `POST /api/users/login` - Login and get JWT token
+
+### Properties
+
+- `POST /api/properties/register` - Register property (publishes to RabbitMQ)
+- `GET /api/properties/user/{userId}` - Get user's properties
+- `GET /api/properties/{matriculaId}` - Get property by ID
+
+### Transfers
+
+- `POST /api/transfers/configure` - Configure transfer with approvers
+- `GET /api/transfers/status` - Get transfer status
+
+### Health
+
+- `GET /api/health` - Service health check
+- `GET /actuator/health` - Spring Boot actuator health
+
+## Environment Variables
+
+Configure in `src/main/resources/application.properties`:
+
+```properties
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/core_orchestrator_db
+spring.datasource.username=postgres
+spring.datasource.password=postgres123
+
+# RabbitMQ
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=admin
+spring.rabbitmq.password=admin123
+
+# JWT
+jwt.secret=your-super-secret-jwt-key-change-in-production
+jwt.expiration=86400000
+
+# Server
+server.port=8080
+```
+
+For Docker deployment, these are overridden via environment variables in docker-compose.yml.
+
+## License
+
+MIT

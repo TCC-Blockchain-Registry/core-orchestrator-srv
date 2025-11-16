@@ -27,20 +27,17 @@ public class AdminUserInitializer {
     CommandLineRunner initAdminUser(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
         return args -> {
             try {
-                // Check if admin user already exists
                 if (userRepositoryPort.findByEmail(DEFAULT_ADMIN_EMAIL).isEmpty()) {
                     logger.info("Creating default admin user...");
-                    
-                    // Encrypt admin password
+
                     String encryptedPassword = passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD);
-                    
-                    // Create admin user with encrypted password (no wallet address)
+
                     UserModel adminUser = new UserModel(
                         DEFAULT_ADMIN_NAME,
                         DEFAULT_ADMIN_EMAIL,
-                        "000.000.000-00",  // CPF fictício para admin
+                        "000.000.000-00",  // Dummy CPF for admin
                         encryptedPassword,
-                        null,  // Admin doesn't need wallet initially
+                        null,
                         UserRole.ADMIN
                     );
                     
