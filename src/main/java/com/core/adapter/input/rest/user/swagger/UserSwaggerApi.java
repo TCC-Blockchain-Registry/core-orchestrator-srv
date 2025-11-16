@@ -1,10 +1,12 @@
 package com.core.adapter.input.rest.user.swagger;
 
+import com.core.adapter.input.rest.user.dto.UpdateWalletRequest;
 import com.core.adapter.input.rest.user.dto.UserLoginRequest;
 import com.core.adapter.input.rest.user.dto.UserLoginResponse;
 import com.core.adapter.input.rest.user.dto.UserRegistrationRequest;
 import com.core.adapter.input.rest.user.dto.UserRegistrationResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -45,5 +47,22 @@ public interface UserSwaggerApi {
     ResponseEntity<UserLoginResponse> loginUser(
         @RequestBody(description = "User login credentials", required = true)
         UserLoginRequest request
+    );
+
+    @Operation(
+        summary = "Update user wallet address",
+        description = "Updates the Ethereum wallet address for a specific user. Used when a user connects their MetaMask wallet."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Wallet address updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid wallet address format"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    ResponseEntity<UserRegistrationResponse> updateWallet(
+        @Parameter(description = "User ID", required = true)
+        String userId,
+        @RequestBody(description = "Wallet address update data", required = true)
+        UpdateWalletRequest request
     );
 }

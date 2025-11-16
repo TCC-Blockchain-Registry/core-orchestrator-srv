@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/property-transfers")
+@CrossOrigin(origins = "*")
 public class PropertyTransferController implements PropertyTransferSwaggerApi {
     
     private final PropertyTransferUseCase transferUseCase;
@@ -112,7 +113,19 @@ public class PropertyTransferController implements PropertyTransferSwaggerApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<TransferResponse> getTransferStatus(@PathVariable Long id) {
+        try {
+            PropertyTransferModel transfer = transferUseCase.findById(id);
+            return ResponseEntity.ok(toResponse(transfer));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     private TransferResponse toResponse(PropertyTransferModel transfer) {
         return new TransferResponse(
             transfer.getId(),

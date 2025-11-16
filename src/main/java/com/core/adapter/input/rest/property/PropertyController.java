@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/properties")
+@CrossOrigin(origins = "*")
 public class PropertyController implements PropertySwaggerApi {
     
     private final PropertyUseCase propertyUseCase;
@@ -93,7 +94,33 @@ public class PropertyController implements PropertySwaggerApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PropertyResponse>> getPropertiesByUserId(@PathVariable Long userId) {
+        try {
+            List<PropertyResponse> properties = propertyUseCase.getPropertiesByUserId(userId).stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(properties);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/by-matricula/{matriculaId}")
+    public ResponseEntity<PropertyResponse> getPropertyByMatriculaId(@PathVariable Long matriculaId) {
+        try {
+            PropertyModel property = propertyUseCase.findByMatriculaId(matriculaId);
+            return ResponseEntity.ok(toResponse(property));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     private PropertyResponse toResponse(PropertyModel property) {
         return new PropertyResponse(
             property.getId(),
