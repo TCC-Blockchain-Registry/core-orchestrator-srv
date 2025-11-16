@@ -1,13 +1,13 @@
 spring:
   application:
     name: core-orchestrator-srv
-  
+
   datasource:
     url: jdbc:postgresql://localhost:5432/core_orchestrator_db
     username: postgres
     password: postgres123
     driver-class-name: org.postgresql.Driver
-  
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,12 +16,41 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-  
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
   liquibase:
     enabled: false
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin123
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+          multiplier: 2.0
+
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-change-in-production-min-256-bits}
+  expiration: 86400000  # 24 hours in milliseconds
+
+rabbitmq:
+  exchange: blockchain-exchange
+  queue: blockchain-jobs
+  routing-key: blockchain.*
 
 logging:
   level:
