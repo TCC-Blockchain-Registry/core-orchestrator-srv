@@ -42,7 +42,12 @@ public interface PropertyUseCase {
      * Find properties by comarca
      */
     List<PropertyModel> findByComarca(String comarca);
-    
+
+    /**
+     * Find properties by user ID (looks up wallet address and queries by proprietario)
+     */
+    List<PropertyModel> getPropertiesByUserId(Long userId);
+
     /**
      * Update property blockchain transaction hash
      */
