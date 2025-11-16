@@ -52,16 +52,30 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public Optional<UserModel> findByEmail(String email) {
         Session session = sessionFactory.openSession();
-        
+
         try {
             String hql = "FROM UserEntity u WHERE u.email = :email";
             UserEntity entity = session.createQuery(hql, UserEntity.class)
                     .setParameter("email", email)
                     .uniqueResult();
-            
+
             return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
         } catch (Exception e) {
             throw new RuntimeException("Failed to find user by email", e);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public Optional<UserModel> findById(Long id) {
+        Session session = sessionFactory.openSession();
+
+        try {
+            UserEntity entity = session.get(UserEntity.class, id);
+            return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find user by id", e);
         } finally {
             session.close();
         }

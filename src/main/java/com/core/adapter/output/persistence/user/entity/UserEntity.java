@@ -21,7 +21,10 @@ public class UserEntity {
     
     @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
-    
+
+    @Column(name = "cpf", unique = true, length = 11)
+    private String cpf;
+
     @Column(name = "password", nullable = false, length = 255)
     private String password;
     
@@ -46,10 +49,11 @@ public class UserEntity {
     }
     
     // Constructor with all fields
-    public UserEntity(String name, String email, String password, String walletAddress,
+    public UserEntity(String name, String email, String cpf, String password, String walletAddress,
                      UserRole role, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.name = name;
         this.email = email;
+        this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
         this.role = role;
@@ -82,7 +86,15 @@ public class UserEntity {
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
     public String getPassword() {
         return password;
     }

@@ -20,18 +20,19 @@ public class UserPersistenceMapper {
         if (userModel == null) {
             return null;
         }
-        
+
         UserEntity entity = new UserEntity();
         entity.setId(userModel.getId());
         entity.setName(userModel.getName());
         entity.setEmail(userModel.getEmail());
+        entity.setCpf(userModel.getCpf());
         entity.setPassword(userModel.getPassword());
         entity.setWalletAddress(userModel.getWalletAddress());
         entity.setRole(userModel.getRole());
         entity.setActive(userModel.getActive());
         entity.setCreatedAt(userModel.getCreatedAt());
         entity.setUpdatedAt(userModel.getUpdatedAt());
-        
+
         return entity;
     }
     
@@ -45,11 +46,12 @@ public class UserPersistenceMapper {
         if (userEntity == null) {
             return null;
         }
-        
+
         return new UserModel(
             userEntity.getId(),
             userEntity.getName(),
             userEntity.getEmail(),
+            userEntity.getCpf(),
             userEntity.getPassword(),
             userEntity.getWalletAddress(),
             userEntity.getRole(),
