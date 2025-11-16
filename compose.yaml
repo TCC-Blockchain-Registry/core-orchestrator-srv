@@ -19,8 +19,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - core-orchestrator-network
 
   # Spring Boot Application
   core-orchestrator-app:
@@ -38,13 +36,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - core-orchestrator-network
 
 volumes:
   postgres_data:
     driver: local
 
 networks:
-  core-orchestrator-network:
-    driver: bridge
+  default:
+    name: property-network
+    external: true
