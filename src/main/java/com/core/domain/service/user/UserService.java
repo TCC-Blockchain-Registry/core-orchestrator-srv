@@ -7,6 +7,7 @@ import com.core.port.output.user.UserRepositoryPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -82,6 +83,37 @@ public class UserService implements UserUseCase {
         }
         
         return user;
+    }
+    
+    @Override
+    public List<UserModel> getAllUsers() {
+        return userRepositoryPort.findAll();
+    }
+    
+    @Override
+    public UserModel updateWalletAddress(Long userId, String walletAddress) {
+        // Validate wallet address
+        if (walletAddress == null || walletAddress.trim().isEmpty()) {
+            throw new IllegalArgumentException("Wallet address cannot be empty");
+        }
+        
+        if (!walletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
+            throw new IllegalArgumentException("Invalid Ethereum wallet address format");
+        }
+        
+        // Find user
+        Optional<UserModel> userOptional = userRepositoryPort.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+        
+        UserModel user = userOptional.get();
+        
+        // Update wallet address
+        user.setWalletAddress(walletAddress);
+        
+        // Save updated user
+        return userRepositoryPort.save(user);
     }
     
     private void validateUserInput(String name, String email, String cpf, String password, String walletAddress) {

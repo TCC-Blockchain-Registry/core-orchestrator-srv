@@ -2,6 +2,7 @@ package com.core.port.input.user;
 
 import com.core.domain.model.user.UserModel;
 import com.core.domain.model.user.UserRole;
+import java.util.List;
 
 /**
  * User Use Case Input Port
@@ -32,4 +33,21 @@ public interface UserUseCase {
      * @throws IllegalArgumentException if credentials are invalid
      */
     UserModel loginUser(String email, String password);
+    
+    /**
+     * Get all users in the system
+     * 
+     * @return List of all users
+     */
+    List<UserModel> getAllUsers();
+    
+    /**
+     * Update user's wallet address
+     * 
+     * @param userId User's ID
+     * @param walletAddress Ethereum wallet address
+     * @return Updated user model
+     * @throws IllegalArgumentException if user not found or wallet address is invalid
+     */
+    UserModel updateWalletAddress(Long userId, String walletAddress);
 }

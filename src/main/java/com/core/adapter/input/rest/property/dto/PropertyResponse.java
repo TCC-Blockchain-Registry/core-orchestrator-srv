@@ -43,6 +43,9 @@ public record PropertyResponse(
         @Schema(description = "Blockchain transaction hash", example = "0x...")
         String blockchainTxHash,
         
+        @Schema(description = "Property status", example = "PENDING", allowableValues = {"PENDING", "PROCESSING", "PENDING_APPROVALS", "EXECUTED", "FAILED"})
+        String status,
+        
         @Schema(description = "Creation timestamp")
         LocalDateTime createdAt,
         

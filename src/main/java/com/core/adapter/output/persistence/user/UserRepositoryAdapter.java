@@ -9,6 +9,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -76,6 +77,24 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
             return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
         } catch (Exception e) {
             throw new RuntimeException("Failed to find user by email", e);
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public List<UserModel> findAll() {
+        Session session = sessionFactory.openSession();
+        
+        try {
+            String hql = "FROM UserEntity ORDER BY createdAt DESC";
+            List<UserEntity> entities = session.createQuery(hql, UserEntity.class).list();
+            
+            return entities.stream()
+                    .map(mapper::toDomain)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find all users", e);
         } finally {
             session.close();
         }

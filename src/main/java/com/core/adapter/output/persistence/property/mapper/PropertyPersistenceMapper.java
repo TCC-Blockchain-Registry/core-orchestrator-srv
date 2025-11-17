@@ -30,6 +30,9 @@ public class PropertyPersistenceMapper {
         entity.setTipo(model.getTipo());
         entity.setIsRegular(model.getIsRegular());
         entity.setBlockchainTxHash(model.getBlockchainTxHash());
+        entity.setRequestHash(model.getRequestHash());
+        entity.setApprovalStatus(model.getApprovalStatus());
+        entity.setStatus(model.getStatus());
         entity.setCreatedAt(model.getCreatedAt());
         entity.setUpdatedAt(model.getUpdatedAt());
         
@@ -44,7 +47,7 @@ public class PropertyPersistenceMapper {
             return null;
         }
         
-        return new PropertyModel(
+        PropertyModel model = new PropertyModel(
             entity.getId(),
             entity.getMatriculaId(),
             entity.getFolha(),
@@ -59,6 +62,13 @@ public class PropertyPersistenceMapper {
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
+        
+        // Set additional V2 fields
+        model.setRequestHash(entity.getRequestHash());
+        model.setApprovalStatus(entity.getApprovalStatus());
+        model.setStatus(entity.getStatus());
+        
+        return model;
     }
 }
 

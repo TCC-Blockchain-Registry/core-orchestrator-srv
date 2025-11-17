@@ -10,6 +10,7 @@ import com.core.port.output.user.UserRepositoryPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +85,43 @@ public class PropertyController implements PropertySwaggerApi {
         }
     }
     
+    @GetMapping("/my")
+    public ResponseEntity<List<PropertyResponse>> getMyProperties(HttpServletRequest request) {
+        try {
+            Boolean authenticated = (Boolean) request.getAttribute("authenticated");
+            if (authenticated == null || !authenticated) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            Optional<UserModel> userOptional = userRepositoryPort.findById(userId);
+            
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            UserModel user = userOptional.get();
+            String walletAddress = user.getWalletAddress();
+            
+            if (walletAddress == null || walletAddress.trim().isEmpty()) {
+                // User has no wallet, return empty list
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+            
+            List<PropertyResponse> properties = propertyUseCase.findByProprietario(walletAddress).stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(properties);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PropertyResponse>> getPropertiesByUserId(@PathVariable Long userId) {
         try {
@@ -140,6 +178,7 @@ public class PropertyController implements PropertySwaggerApi {
             property.getTipo(),
             property.getIsRegular(),
             property.getBlockchainTxHash(),
+            property.getStatus(),
             property.getCreatedAt(),
             property.getUpdatedAt()
         );

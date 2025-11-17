@@ -48,6 +48,15 @@ public class PropertyEntity {
     @Column(name = "blockchain_tx_hash", length = 66)
     private String blockchainTxHash;  // Ethereum transaction hash (0x...)
     
+    @Column(name = "request_hash", length = 66)
+    private String requestHash;  // V2 approval system request hash (0x...)
+    
+    @Column(name = "approval_status", length = 20)
+    private String approvalStatus;  // PENDING_APPROVALS, APPROVED, EXECUTED
+    
+    @Column(name = "status", length = 30)
+    private String status;  // PENDING, PROCESSING, PENDING_APPROVALS, EXECUTED, FAILED
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
@@ -164,6 +173,30 @@ public class PropertyEntity {
     
     public void setBlockchainTxHash(String blockchainTxHash) {
         this.blockchainTxHash = blockchainTxHash;
+    }
+    
+    public String getRequestHash() {
+        return requestHash;
+    }
+    
+    public void setRequestHash(String requestHash) {
+        this.requestHash = requestHash;
+    }
+    
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+    
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
     
     public LocalDateTime getCreatedAt() {

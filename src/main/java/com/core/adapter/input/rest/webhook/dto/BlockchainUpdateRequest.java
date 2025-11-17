@@ -15,15 +15,23 @@ public class BlockchainUpdateRequest {
 
     @JsonProperty("status")
     private String status;
+    
+    @JsonProperty("requestHash")
+    private String requestHash;
+    
+    @JsonProperty("approvalStatus")
+    private String approvalStatus;
 
     public BlockchainUpdateRequest() {
     }
 
-    public BlockchainUpdateRequest(String transactionHash, Long blockNumber, String jobId, String status) {
+    public BlockchainUpdateRequest(String transactionHash, Long blockNumber, String jobId, String status, String requestHash, String approvalStatus) {
         this.transactionHash = transactionHash;
         this.blockNumber = blockNumber;
         this.jobId = jobId;
         this.status = status;
+        this.requestHash = requestHash;
+        this.approvalStatus = approvalStatus;
     }
 
     public String getTransactionHash() {
@@ -56,6 +64,22 @@ public class BlockchainUpdateRequest {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    
+    public String getRequestHash() {
+        return requestHash;
+    }
+    
+    public void setRequestHash(String requestHash) {
+        this.requestHash = requestHash;
+    }
+    
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+    
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
     }
 }
 

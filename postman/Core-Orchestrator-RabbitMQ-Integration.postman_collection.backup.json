@@ -2,7 +2,7 @@
   "info": {
     "name": "Core Orchestrator - RabbitMQ Integration Tests",
     "_postman_id": "orchestrator-rabbitmq-test",
-    "description": "Collection para testar a integração do Core Orchestrator com RabbitMQ.\n\n**Fluxo:**\n1. HTTP Request → Core Orchestrator\n2. Salva no PostgreSQL\n3. Envia job para RabbitMQ\n4. Queue Worker processa\n5. Offchain API executa na blockchain\n\n**Novidade:** Sistema V2 com aprovações multi-institucionais!",
+    "description": "Collection para testar a integração do Core Orchestrator com RabbitMQ.\n\n**Fluxo:**\n1. HTTP Request → Core Orchestrator\n2. Salva no PostgreSQL\n3. Envia job para RabbitMQ\n4. Queue Worker processa\n5. Offchain API executa na blockchain",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -16,13 +16,8 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/actuator/health",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "actuator",
-                "health"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["actuator", "health"]
             },
             "description": "Verifica se o Core Orchestrator está rodando"
           },
@@ -36,14 +31,9 @@
             "url": {
               "raw": "http://localhost:15672/api/overview",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "overview"
-              ]
+              "path": ["api", "overview"]
             },
             "description": "Verifica status do RabbitMQ"
           },
@@ -56,12 +46,8 @@
             "header": [],
             "url": {
               "raw": "{{offchain_api_url}}/health",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "health"
-              ]
+              "host": ["{{offchain_api_url}}"],
+              "path": ["health"]
             },
             "description": "Verifica se Offchain API está respondendo"
           },
@@ -75,16 +61,9 @@
             "url": {
               "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "queues",
-                "%2F",
-                "blockchain-jobs"
-              ]
+              "path": ["api", "queues", "%2F", "blockchain-jobs"]
             },
             "description": "Verifica status da fila blockchain-jobs"
           },
@@ -137,14 +116,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/users/register",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "register"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "users", "register"]
             },
             "description": "Cria um novo usuário no sistema"
           },
@@ -185,14 +158,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/users/login",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "login"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "users", "login"]
             },
             "description": "Autentica usuário e retorna JWT token"
           },
@@ -238,15 +205,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/users/{{user_id}}/wallet",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "{{user_id}}",
-                "wallet"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "users", "{{user_id}}", "wallet"]
             },
             "description": "Atualiza o endereço da carteira Ethereum do usuário.\n\n⚠️ **Requer autenticação:** Token JWT no header Authorization.\n\n**Validações:**\n- Wallet address não pode ser vazio\n- Deve ter formato válido: 0x seguido de 40 caracteres hexadecimais\n\n**Exemplo de uso:**\n1. Faça login para obter o token e user_id\n2. Use este endpoint para vincular a MetaMask ao usuário\n3. O endereço será salvo no banco de dados\n\n**Importante:** Este endereço será usado para:\n- Registrar propriedades na blockchain\n- Executar transferências\n- Identificar o proprietário no smart contract"
           },
@@ -264,15 +224,8 @@
             ],
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/user/{{user_id}}",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "user",
-                "{{user_id}}"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "user", "{{user_id}}"]
             },
             "description": "Busca propriedades do usuário"
           },
@@ -314,13 +267,8 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/users",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "users"]
             },
             "description": "Lista todos os usuários do sistema.\n\n**Retorna:**\n- Lista de usuários ordenados por data de criação (mais recentes primeiro)\n- **Não inclui senha** (informação sensível)\n\n**Campos retornados:**\n- id: ID único do usuário\n- name: Nome completo\n- email: Email\n- cpf: CPF (se cadastrado)\n- walletAddress: Endereço da carteira (se configurado)\n- role: Papel (USER/ADMIN)\n- active: Status da conta\n- createdAt: Data de criação"
           },
@@ -373,14 +321,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/register",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "register"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
             },
             "description": "Registra propriedade no banco e envia job REGISTER_PROPERTY para RabbitMQ.\n\n**Fluxo Esperado:**\n1. ✅ Salva no PostgreSQL (core_orchestrator_db)\n2. 📤 Publica job na fila blockchain-jobs\n3. ⏳ Queue Worker processa\n4. ✅ Offchain API registra na blockchain"
           },
@@ -415,14 +357,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/register",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "register"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
             },
             "description": "Segunda propriedade para testar múltiplos jobs"
           },
@@ -444,14 +380,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/register",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "register"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
             },
             "description": "Propriedade rural para teste"
           },
@@ -470,14 +400,8 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/{{property_id}}",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{property_id}}"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "{{property_id}}"]
             },
             "description": "Busca propriedade no banco do orchestrator (não na blockchain)"
           },
@@ -490,13 +414,8 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/properties",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties"]
             },
             "description": "Lista todas as propriedades do banco"
           },
@@ -509,9 +428,7 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/properties/by-proprietario/0x565524f400856766f11562832eB809d889491a01",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
+              "host": ["{{orchestrator_url}}"],
               "path": [
                 "api",
                 "properties",
@@ -561,14 +478,8 @@
             },
             "url": {
               "raw": "{{orchestrator_url}}/api/property-transfers/initiate",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "property-transfers",
-                "initiate"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "property-transfers", "initiate"]
             },
             "description": "Inicia transferência e envia job CONFIGURE_TRANSFER para RabbitMQ.\n\n**Fluxo Esperado:**\n1. ✅ Salva transferência no banco (status PENDING)\n2. 📤 Publica job CONFIGURE_TRANSFER na fila\n3. ⏳ Queue Worker processa\n4. ✅ Offchain API configura transferência na blockchain"
           },
@@ -581,14 +492,8 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/property-transfers/{{transfer_id}}",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "property-transfers",
-                "{{transfer_id}}"
-              ]
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "property-transfers", "{{transfer_id}}"]
             },
             "description": "Busca informações da transferência"
           },
@@ -601,9 +506,7 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/property-transfers/property/{{property_id}}",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
+              "host": ["{{orchestrator_url}}"],
               "path": [
                 "api",
                 "property-transfers",
@@ -622,9 +525,7 @@
             "header": [],
             "url": {
               "raw": "{{orchestrator_url}}/api/property-transfers/{{transfer_id}}/approve",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
+              "host": ["{{orchestrator_url}}"],
               "path": [
                 "api",
                 "property-transfers",
@@ -649,14 +550,8 @@
             "header": [],
             "url": {
               "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{matricula_id}}"
-              ]
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}"]
             },
             "description": "Verifica se a propriedade foi registrada na blockchain.\n\n⏳ **Aguarde alguns segundos** após o registro no orchestrator para que o job seja processado."
           },
@@ -669,15 +564,8 @@
             "header": [],
             "url": {
               "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}/exists",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{matricula_id}}",
-                "exists"
-              ]
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}", "exists"]
             },
             "description": "Verifica se propriedade existe na blockchain"
           },
@@ -690,15 +578,8 @@
             "header": [],
             "url": {
               "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}/owner",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{matricula_id}}",
-                "owner"
-              ]
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}", "owner"]
             },
             "description": "Busca dono atual da propriedade na blockchain"
           },
@@ -718,14 +599,9 @@
             "url": {
               "raw": "http://localhost:15672/api/queues",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "queues"
-              ]
+              "path": ["api", "queues"]
             },
             "description": "Lista todas as filas do RabbitMQ"
           },
@@ -739,16 +615,9 @@
             "url": {
               "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "queues",
-                "%2F",
-                "blockchain-jobs"
-              ]
+              "path": ["api", "queues", "%2F", "blockchain-jobs"]
             },
             "description": "Estatísticas da fila principal:\n- messages: jobs na fila\n- messages_ready: prontos para processar\n- messages_unacknowledged: sendo processados"
           },
@@ -762,16 +631,9 @@
             "url": {
               "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs-dlq",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "queues",
-                "%2F",
-                "blockchain-jobs-dlq"
-              ]
+              "path": ["api", "queues", "%2F", "blockchain-jobs-dlq"]
             },
             "description": "Dead Letter Queue - jobs que falharam após 3 tentativas"
           },
@@ -785,14 +647,9 @@
             "url": {
               "raw": "http://localhost:15672/api/connections",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "15672",
-              "path": [
-                "api",
-                "connections"
-              ]
+              "path": ["api", "connections"]
             },
             "description": "Lista conexões ativas ao RabbitMQ (orchestrator, worker)"
           },
@@ -800,328 +657,6 @@
         }
       ],
       "description": "Endpoints para monitorar RabbitMQ via API"
-    },
-    {
-      "name": "6. Sistema V2 - Aprovações (Blockchain)",
-      "item": [
-        {
-          "name": "⚡ NOVO: Request Property Registration",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.requestHash) {",
-                  "        pm.environment.set('request_hash', jsonData.data.requestHash);",
-                  "        console.log('Request Hash salvo:', jsonData.data.requestHash);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"matriculaId\": 9998887,\n  \"beneficiary\": \"0x565524f400856766f11562832eB809d889491a01\"\n}"
-            },
-            "url": {
-              "raw": "{{offchain_api_url}}/api/approvals/v2/registration/request",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "approvals",
-                "v2",
-                "registration",
-                "request"
-              ]
-            },
-            "description": "Sistema V2: Cria solicitação que ficará PENDENTE até 3 aprovações"
-          },
-          "response": []
-        },
-        {
-          "name": "1️⃣ Approve as Financial",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{offchain_api_url}}/api/approvals/v2/registration/{{request_hash}}/financial",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "approvals",
-                "v2",
-                "registration",
-                "{{request_hash}}",
-                "financial"
-              ]
-            },
-            "description": "Aprovação 1/3: Instituição Financeira"
-          },
-          "response": []
-        },
-        {
-          "name": "2️⃣ Approve as Registry Office",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{offchain_api_url}}/api/approvals/v2/registration/{{request_hash}}/registry-office",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "approvals",
-                "v2",
-                "registration",
-                "{{request_hash}}",
-                "registry-office"
-              ]
-            },
-            "description": "Aprovação 2/3: Cartório"
-          },
-          "response": []
-        },
-        {
-          "name": "3️⃣ Approve as Municipality (AUTO-EXECUTES)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{offchain_api_url}}/api/approvals/v2/registration/{{request_hash}}/municipality",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "approvals",
-                "v2",
-                "registration",
-                "{{request_hash}}",
-                "municipality"
-              ]
-            },
-            "description": "Aprovação 3/3: Prefeitura. ⚡ AUTO-EXECUTA o registro!"
-          },
-          "response": []
-        },
-        {
-          "name": "Check Registration Status",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{offchain_api_url}}/api/approvals/v2/registration/{{request_hash}}/status",
-              "host": [
-                "{{offchain_api_url}}"
-              ],
-              "path": [
-                "api",
-                "approvals",
-                "v2",
-                "registration",
-                "{{request_hash}}",
-                "status"
-              ]
-            },
-            "description": "Verifica status: financialApproved, registryOfficeApproved, municipalityApproved, executed"
-          },
-          "response": []
-        }
-      ],
-      "description": "Sistema V2 com aprovações multi-institucionais. A 3ª aprovação AUTO-EXECUTA o registro!"
-    },
-    {
-      "name": "8. Aprovações via Core Orchestrator (V2)",
-      "description": "Endpoints para fazer aprovações através do Core Orchestrator.\nO Core Orchestrator pega o requestHash do banco e encaminha para o Offchain API.",
-      "item": [
-        {
-          "name": "Get Approval Status",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{orchestrator_url}}/api/properties/{{property_id}}/approvals/status",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{property_id}}",
-                "approvals",
-                "status"
-              ]
-            },
-            "description": "Verifica o status de aprovação de uma propriedade"
-          },
-          "response": []
-        },
-        {
-          "name": "1️⃣ Approve as Financial (via Orchestrator)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Approval successful\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{orchestrator_url}}/api/properties/{{property_id}}/approvals/financial",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{property_id}}",
-                "approvals",
-                "financial"
-              ]
-            },
-            "description": "Aprovação pela Instituição Financeira via Core Orchestrator"
-          },
-          "response": []
-        },
-        {
-          "name": "2️⃣ Approve as Registry Office (via Orchestrator)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Approval successful\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{orchestrator_url}}/api/properties/{{property_id}}/approvals/registry-office",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{property_id}}",
-                "approvals",
-                "registry-office"
-              ]
-            },
-            "description": "Aprovação pelo Cartório via Core Orchestrator"
-          },
-          "response": []
-        },
-        {
-          "name": "3️⃣ Approve as Municipality (via Orchestrator) - AUTO EXECUTE",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Approval successful and executed\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{orchestrator_url}}/api/properties/{{property_id}}/approvals/municipality",
-              "host": [
-                "{{orchestrator_url}}"
-              ],
-              "path": [
-                "api",
-                "properties",
-                "{{property_id}}",
-                "approvals",
-                "municipality"
-              ]
-            },
-            "description": "Aprovação pela Prefeitura via Core Orchestrator. Executa automaticamente após esta aprovação!"
-          },
-          "response": []
-        }
-      ]
     }
   ],
   "variable": [
@@ -1169,11 +704,7 @@
       "key": "user_role",
       "value": "",
       "type": "string"
-    },
-    {
-      "key": "request_hash",
-      "value": "",
-      "type": "string"
     }
   ]
 }
+

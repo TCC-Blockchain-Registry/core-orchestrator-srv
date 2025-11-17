@@ -27,10 +27,19 @@ public class BlockchainWebhookController {
             @PathVariable Long id,
             @RequestBody BlockchainUpdateRequest request
     ) {
-        logger.info("📨 Webhook received: Update property {} with txHash {}", id, request.getTransactionHash());
+        logger.info("📨 Webhook received: Update property {} with txHash {}, requestHash {}, status {}", 
+            id, request.getTransactionHash(), request.getRequestHash(), request.getApprovalStatus());
 
         try {
+            // Atualizar txHash (sempre)
             propertyService.updateBlockchainTxHash(id, request.getTransactionHash());
+            
+            // Atualizar requestHash e approvalStatus se fornecidos (Sistema V2)
+            if (request.getRequestHash() != null) {
+                propertyService.updateRequestHash(id, request.getRequestHash(), request.getApprovalStatus());
+                logger.info("✅ Property {} updated with requestHash for V2 approval system", id);
+            }
+            
             logger.info("✅ Property {} updated successfully", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.core.port.output.user;
 
 import com.core.domain.model.user.UserModel;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,4 +33,11 @@ public interface UserRepositoryPort {
      * @return Optional containing the user if found, empty otherwise
      */
     Optional<UserModel> findByEmail(String email);
+    
+    /**
+     * Find all users
+     * 
+     * @return List of all users in the system
+     */
+    List<UserModel> findAll();
 }

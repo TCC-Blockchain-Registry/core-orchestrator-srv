@@ -20,6 +20,9 @@ public class PropertyModel {
     private PropertyType tipo;
     private Boolean isRegular;
     private String blockchainTxHash;  // Hash da transação na blockchain
+    private String requestHash;  // V2 approval system request hash
+    private String approvalStatus;  // PENDING_APPROVALS, EXECUTED
+    private String status;  // PENDING, PROCESSING, PENDING_APPROVALS, EXECUTED, FAILED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -153,6 +156,30 @@ public class PropertyModel {
     
     public void setBlockchainTxHash(String blockchainTxHash) {
         this.blockchainTxHash = blockchainTxHash;
+    }
+    
+    public String getRequestHash() {
+        return requestHash;
+    }
+    
+    public void setRequestHash(String requestHash) {
+        this.requestHash = requestHash;
+    }
+    
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+    
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
     
     public LocalDateTime getCreatedAt() {

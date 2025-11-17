@@ -1,5 +1,7 @@
 package com.core.adapter.input.rest.user;
 
+import com.core.adapter.input.rest.user.dto.UpdateWalletRequest;
+import com.core.adapter.input.rest.user.dto.UserListResponse;
 import com.core.adapter.input.rest.user.dto.UserLoginRequest;
 import com.core.adapter.input.rest.user.dto.UserLoginResponse;
 import com.core.adapter.input.rest.user.dto.UserRegistrationRequest;
@@ -11,6 +13,9 @@ import com.core.port.input.user.UserUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * User REST Controller
@@ -95,6 +100,63 @@ public class UserController implements UserSwaggerApi {
             
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @Override
+    @GetMapping
+    public ResponseEntity<List<UserListResponse>> getAllUsers() {
+        try {
+            List<UserModel> users = userUseCase.getAllUsers();
+            
+            List<UserListResponse> response = users.stream()
+                    .map(user -> new UserListResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getCpf(),
+                        user.getWalletAddress(),
+                        user.getRole(),
+                        user.getActive(),
+                        user.getCreatedAt()
+                    ))
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @Override
+    @PutMapping("/{userId}/wallet")
+    public ResponseEntity<UserListResponse> updateWalletAddress(
+            @PathVariable Long userId,
+            @RequestBody UpdateWalletRequest request) {
+        try {
+            UserModel updatedUser = userUseCase.updateWalletAddress(userId, request.walletAddress());
+            
+            UserListResponse response = new UserListResponse(
+                updatedUser.getId(),
+                updatedUser.getName(),
+                updatedUser.getEmail(),
+                updatedUser.getCpf(),
+                updatedUser.getWalletAddress(),
+                updatedUser.getRole(),
+                updatedUser.getActive(),
+                updatedUser.getCreatedAt()
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

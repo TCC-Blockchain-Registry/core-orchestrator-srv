@@ -44,6 +44,30 @@ public class PropertyService implements PropertyUseCase {
         return updatedProperty;
     }
     
+    public PropertyModel updateRequestHash(Long propertyId, String requestHash, String approvalStatus) {
+        logger.info("Updating requestHash for property {}: requestHash={}, status={}", 
+            propertyId, requestHash, approvalStatus);
+        
+        PropertyModel property = propertyRepositoryPort.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found: " + propertyId));
+        
+        property.setRequestHash(requestHash);
+        property.setApprovalStatus(approvalStatus != null ? approvalStatus : "PENDING_APPROVALS");
+        
+        // Update status based on approvalStatus
+        if ("PENDING_APPROVALS".equals(approvalStatus)) {
+            property.setStatus("PENDING_APPROVALS");
+        } else if ("EXECUTED".equals(approvalStatus)) {
+            property.setStatus("EXECUTED");
+        }
+        
+        PropertyModel updatedProperty = propertyRepositoryPort.save(property);
+        
+        logger.info("✅ Property {} updated with requestHash for V2 approval system", propertyId);
+        
+        return updatedProperty;
+    }
+    
     @Override
     public PropertyModel registerProperty(Long matriculaId, Long folha, String comarca,
                                          String endereco, Long metragem, String proprietario,
@@ -67,6 +91,7 @@ public class PropertyService implements PropertyUseCase {
         property.setMatriculaOrigem(matriculaOrigem);
         property.setTipo(tipo);
         property.setIsRegular(isRegular != null ? isRegular : true);
+        property.setStatus("PENDING");  // Status inicial
         
         // Save to database first
         PropertyModel savedProperty = propertyRepositoryPort.save(property);
@@ -92,9 +117,16 @@ public class PropertyService implements PropertyUseCase {
             logger.info("🚀 Blockchain job published: jobId={}, propertyId={}, matriculaId={}", 
                 jobId, savedProperty.getId(), matriculaId);
             
+            // Update status to PROCESSING
+            savedProperty.setStatus("PROCESSING");
+            savedProperty = propertyRepositoryPort.save(savedProperty);
+            
         } catch (Exception e) {
             logger.error("⚠️  Failed to publish blockchain job for property {}: {}", 
                 matriculaId, e.getMessage());
+            // Update status to FAILED
+            savedProperty.setStatus("FAILED");
+            savedProperty = propertyRepositoryPort.save(savedProperty);
             // Don't throw - property is already saved in DB
             // The job can be retried later or handled by monitoring
         }
