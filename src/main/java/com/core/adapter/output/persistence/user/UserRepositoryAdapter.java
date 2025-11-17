@@ -50,6 +50,20 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
     
     @Override
+    public Optional<UserModel> findById(Long id) {
+        Session session = sessionFactory.openSession();
+        
+        try {
+            UserEntity entity = session.get(UserEntity.class, id);
+            return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find user by id", e);
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
     public Optional<UserModel> findByEmail(String email) {
         Session session = sessionFactory.openSession();
         

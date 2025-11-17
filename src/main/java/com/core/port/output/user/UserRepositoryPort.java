@@ -18,6 +18,14 @@ public interface UserRepositoryPort {
     UserModel save(UserModel user);
     
     /**
+     * Find a user by ID
+     * 
+     * @param id The user ID to search for
+     * @return Optional containing the user if found, empty otherwise
+     */
+    Optional<UserModel> findById(Long id);
+    
+    /**
      * Find a user by email address
      * 
      * @param email The email to search for

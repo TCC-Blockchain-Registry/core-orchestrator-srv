@@ -4,12 +4,16 @@ import com.core.adapter.input.rest.property.dto.PropertyRegistrationRequest;
 import com.core.adapter.input.rest.property.dto.PropertyResponse;
 import com.core.adapter.input.rest.property.swagger.PropertySwaggerApi;
 import com.core.domain.model.property.PropertyModel;
+import com.core.domain.model.user.UserModel;
 import com.core.port.input.property.PropertyUseCase;
+import com.core.port.output.user.UserRepositoryPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -21,9 +25,11 @@ import java.util.stream.Collectors;
 public class PropertyController implements PropertySwaggerApi {
     
     private final PropertyUseCase propertyUseCase;
+    private final UserRepositoryPort userRepositoryPort;
     
-    public PropertyController(PropertyUseCase propertyUseCase) {
+    public PropertyController(PropertyUseCase propertyUseCase, UserRepositoryPort userRepositoryPort) {
         this.propertyUseCase = propertyUseCase;
+        this.userRepositoryPort = userRepositoryPort;
     }
     
     @Override
@@ -72,6 +78,33 @@ public class PropertyController implements PropertySwaggerApi {
             List<PropertyResponse> properties = propertyUseCase.findAll().stream()
                     .map(this::toResponse)
                     .collect(Collectors.toList());
+            return ResponseEntity.ok(properties);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PropertyResponse>> getPropertiesByUserId(@PathVariable Long userId) {
+        try {
+            Optional<UserModel> userOptional = userRepositoryPort.findById(userId);
+            
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            UserModel user = userOptional.get();
+            String walletAddress = user.getWalletAddress();
+            
+            if (walletAddress == null || walletAddress.trim().isEmpty()) {
+                // User has no wallet, return empty list
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+            
+            List<PropertyResponse> properties = propertyUseCase.findByProprietario(walletAddress).stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+            
             return ResponseEntity.ok(properties);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
