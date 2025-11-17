@@ -23,11 +23,11 @@ public interface UserSwaggerApi {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "User created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data - returns error message"),
         @ApiResponse(responseCode = "409", description = "User with this email already exists"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    ResponseEntity<UserRegistrationResponse> registerUser(
+    ResponseEntity<?> registerUser(
         @RequestBody(description = "User registration data", required = true)
         UserRegistrationRequest request
     );

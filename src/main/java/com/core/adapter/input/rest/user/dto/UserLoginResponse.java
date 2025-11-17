@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 @Schema(description = "User login response data")
 public record UserLoginResponse(
         
+        @Schema(description = "JWT authentication token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+        String token,
+        
         @Schema(description = "User's unique identifier", example = "1")
         Long id,
         
@@ -18,6 +21,9 @@ public record UserLoginResponse(
         
         @Schema(description = "User's email address", example = "john.doe@example.com")
         String email,
+        
+        @Schema(description = "User's CPF (Brazilian tax ID)", example = "12345678900")
+        String cpf,
         
         @Schema(description = "User's Ethereum wallet address", example = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")
         String walletAddress,

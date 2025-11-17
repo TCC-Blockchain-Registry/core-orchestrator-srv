@@ -29,9 +29,9 @@ public class UserService implements UserUseCase {
     }
     
     @Override
-    public UserModel registerUser(String name, String email, String password, String walletAddress, UserRole role) {
+    public UserModel registerUser(String name, String email, String cpf, String password, String walletAddress, UserRole role) {
         // Validate input parameters
-        validateUserInput(name, email, password, walletAddress);
+        validateUserInput(name, email, cpf, password, walletAddress);
         
         // Check if user already exists
         Optional<UserModel> existingUser = userRepositoryPort.findByEmail(email);
@@ -46,7 +46,7 @@ public class UserService implements UserUseCase {
         String encryptedPassword = passwordEncoder.encode(password);
         
         // Create new user with encrypted password
-        UserModel newUser = new UserModel(name, email, encryptedPassword, walletAddress, userRole);
+        UserModel newUser = new UserModel(name, email, cpf, encryptedPassword, walletAddress, userRole);
         
         // Save and return
         return userRepositoryPort.save(newUser);
@@ -84,7 +84,7 @@ public class UserService implements UserUseCase {
         return user;
     }
     
-    private void validateUserInput(String name, String email, String password, String walletAddress) {
+    private void validateUserInput(String name, String email, String cpf, String password, String walletAddress) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty");
         }
@@ -95,6 +95,15 @@ public class UserService implements UserUseCase {
         
         if (!EMAIL_PATTERN.matcher(email).matches()) {
             throw new IllegalArgumentException("Invalid email format");
+        }
+        
+        // Validate CPF if provided
+        if (cpf != null && !cpf.trim().isEmpty()) {
+            // Remove any non-digit characters
+            String cleanCpf = cpf.replaceAll("\\D", "");
+            if (cleanCpf.length() != 11) {
+                throw new IllegalArgumentException("CPF must have exactly 11 digits");
+            }
         }
         
         if (password == null || password.length() < 6) {

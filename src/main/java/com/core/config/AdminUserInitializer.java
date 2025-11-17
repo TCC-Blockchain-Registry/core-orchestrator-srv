@@ -38,6 +38,7 @@ public class AdminUserInitializer {
                     UserModel adminUser = new UserModel(
                         DEFAULT_ADMIN_NAME,
                         DEFAULT_ADMIN_EMAIL,
+                        null,  // Admin doesn't need CPF
                         encryptedPassword,
                         null,  // Admin doesn't need wallet initially
                         UserRole.ADMIN

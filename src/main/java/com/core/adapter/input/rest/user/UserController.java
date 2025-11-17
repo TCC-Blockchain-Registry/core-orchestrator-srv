@@ -5,6 +5,7 @@ import com.core.adapter.input.rest.user.dto.UserLoginResponse;
 import com.core.adapter.input.rest.user.dto.UserRegistrationRequest;
 import com.core.adapter.input.rest.user.dto.UserRegistrationResponse;
 import com.core.adapter.input.rest.user.swagger.UserSwaggerApi;
+import com.core.config.JwtService;
 import com.core.domain.model.user.UserModel;
 import com.core.port.input.user.UserUseCase;
 import org.springframework.http.HttpStatus;
@@ -20,18 +21,21 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements UserSwaggerApi {
     
     private final UserUseCase userUseCase;
+    private final JwtService jwtService;
     
-    public UserController(UserUseCase userUseCase) {
+    public UserController(UserUseCase userUseCase, JwtService jwtService) {
         this.userUseCase = userUseCase;
+        this.jwtService = jwtService;
     }
     
     @Override
     @PostMapping("/register")
-    public ResponseEntity<UserRegistrationResponse> registerUser(@RequestBody UserRegistrationRequest request) {
+    public ResponseEntity<?> registerUser(@RequestBody UserRegistrationRequest request) {
         try {
             UserModel registeredUser = userUseCase.registerUser(
                 request.name(),
                 request.email(),
+                request.cpf(),
                 request.password(),
                 request.walletAddress(),
                 request.role()
@@ -41,6 +45,7 @@ public class UserController implements UserSwaggerApi {
                 registeredUser.getId(),
                 registeredUser.getName(),
                 registeredUser.getEmail(),
+                registeredUser.getCpf(),
                 registeredUser.getWalletAddress(),
                 registeredUser.getRole(),
                 registeredUser.getActive(),
@@ -50,9 +55,10 @@ public class UserController implements UserSwaggerApi {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(java.util.Map.of("message", "Internal server error"));
         }
     }
     
@@ -65,10 +71,19 @@ public class UserController implements UserSwaggerApi {
                 request.password()
             );
             
+            // Generate JWT token
+            String token = jwtService.generateToken(
+                authenticatedUser.getId(),
+                authenticatedUser.getEmail(),
+                authenticatedUser.getRole().name()
+            );
+            
             UserLoginResponse response = new UserLoginResponse(
+                token,
                 authenticatedUser.getId(),
                 authenticatedUser.getName(),
                 authenticatedUser.getEmail(),
+                authenticatedUser.getCpf(),
                 authenticatedUser.getWalletAddress(),
                 authenticatedUser.getRole(),
                 authenticatedUser.getActive(),

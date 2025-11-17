@@ -19,6 +19,9 @@ public record UserRegistrationResponse(
         @Schema(description = "User's email address", example = "john.doe@example.com")
         String email,
         
+        @Schema(description = "User's CPF (Brazilian tax ID)", example = "12345678900")
+        String cpf,
+        
         @Schema(description = "User's Ethereum wallet address", example = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")
         String walletAddress,
         

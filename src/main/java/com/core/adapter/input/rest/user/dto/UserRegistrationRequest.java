@@ -15,6 +15,9 @@ public record UserRegistrationRequest(
         @Schema(description = "User's email address", example = "john.doe@example.com", required = true)
         String email,
         
+        @Schema(description = "User's CPF (Brazilian tax ID)", example = "12345678900")
+        String cpf,
+        
         @Schema(description = "User's password", example = "securePassword123", required = true)
         String password,
         

@@ -25,6 +25,7 @@ public class UserPersistenceMapper {
         entity.setId(userModel.getId());
         entity.setName(userModel.getName());
         entity.setEmail(userModel.getEmail());
+        entity.setCpf(userModel.getCpf());
         entity.setPassword(userModel.getPassword());
         entity.setWalletAddress(userModel.getWalletAddress());
         entity.setRole(userModel.getRole());
@@ -50,6 +51,7 @@ public class UserPersistenceMapper {
             userEntity.getId(),
             userEntity.getName(),
             userEntity.getEmail(),
+            userEntity.getCpf(),
             userEntity.getPassword(),
             userEntity.getWalletAddress(),
             userEntity.getRole(),

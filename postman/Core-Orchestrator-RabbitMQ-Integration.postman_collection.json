@@ -1,0 +1,485 @@
+{
+  "info": {
+    "name": "Core Orchestrator - RabbitMQ Integration Tests",
+    "_postman_id": "orchestrator-rabbitmq-test",
+    "description": "Collection para testar a integração do Core Orchestrator com RabbitMQ.\n\n**Fluxo:**\n1. HTTP Request → Core Orchestrator\n2. Salva no PostgreSQL\n3. Envia job para RabbitMQ\n4. Queue Worker processa\n5. Offchain API executa na blockchain",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Checks",
+      "item": [
+        {
+          "name": "Orchestrator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/actuator/health",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Verifica se o Core Orchestrator está rodando"
+          },
+          "response": []
+        },
+        {
+          "name": "RabbitMQ Management API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/overview",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "overview"]
+            },
+            "description": "Verifica status do RabbitMQ"
+          },
+          "response": []
+        },
+        {
+          "name": "Offchain API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{offchain_api_url}}/health",
+              "host": ["{{offchain_api_url}}"],
+              "path": ["health"]
+            },
+            "description": "Verifica se Offchain API está respondendo"
+          },
+          "response": []
+        },
+        {
+          "name": "Check RabbitMQ Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "queues", "%2F", "blockchain-jobs"]
+            },
+            "description": "Verifica status da fila blockchain-jobs"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para verificar se todos os serviços estão rodando"
+    },
+    {
+      "name": "2. Property Registration (with RabbitMQ)",
+      "item": [
+        {
+          "name": "Register Property - Test 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has property data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('matriculaId');",
+                  "    pm.expect(jsonData.matriculaId).to.eql(111222);",
+                  "});",
+                  "",
+                  "// Save property ID for later use",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('property_id', jsonData.id);",
+                  "pm.environment.set('matricula_id', jsonData.matriculaId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matriculaId\": 111222,\n  \"folha\": 100,\n  \"comarca\": \"São Paulo - SP\",\n  \"endereco\": \"Rua RabbitMQ Test, 100\",\n  \"metragem\": 250,\n  \"proprietario\": \"0x565524f400856766f11562832eB809d889491a01\",\n  \"matriculaOrigem\": 0,\n  \"tipo\": \"URBANO\",\n  \"isRegular\": true\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties/register",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
+            },
+            "description": "Registra propriedade no banco e envia job REGISTER_PROPERTY para RabbitMQ.\n\n**Fluxo Esperado:**\n1. ✅ Salva no PostgreSQL (core_orchestrator_db)\n2. 📤 Publica job na fila blockchain-jobs\n3. ⏳ Queue Worker processa\n4. ✅ Offchain API registra na blockchain"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Property - Test 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matriculaId\": 222333,\n  \"folha\": 200,\n  \"comarca\": \"Rio de Janeiro - RJ\",\n  \"endereco\": \"Av. Integration, 200\",\n  \"metragem\": 180,\n  \"proprietario\": \"0x565524f400856766f11562832eB809d889491a01\",\n  \"matriculaOrigem\": 0,\n  \"tipo\": \"LITORAL\",\n  \"isRegular\": true\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties/register",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
+            },
+            "description": "Segunda propriedade para testar múltiplos jobs"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Property - Rural",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matriculaId\": 333444,\n  \"folha\": 300,\n  \"comarca\": \"Goiânia - GO\",\n  \"endereco\": \"Fazenda Rural Test, Km 50\",\n  \"metragem\": 5000,\n  \"proprietario\": \"0x565524f400856766f11562832eB809d889491a01\",\n  \"matriculaOrigem\": 0,\n  \"tipo\": \"RURAL\",\n  \"isRegular\": true\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties/register",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "register"]
+            },
+            "description": "Propriedade rural para teste"
+          },
+          "response": []
+        }
+      ],
+      "description": "Registra propriedades que serão enviadas para blockchain via RabbitMQ"
+    },
+    {
+      "name": "3. Property Queries (from Database)",
+      "item": [
+        {
+          "name": "Get Property by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties/{{property_id}}",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties", "{{property_id}}"]
+            },
+            "description": "Busca propriedade no banco do orchestrator (não na blockchain)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "properties"]
+            },
+            "description": "Lista todas as propriedades do banco"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Properties by Owner",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/properties/by-proprietario/0x565524f400856766f11562832eB809d889491a01",
+              "host": ["{{orchestrator_url}}"],
+              "path": [
+                "api",
+                "properties",
+                "by-proprietario",
+                "0x565524f400856766f11562832eB809d889491a01"
+              ]
+            },
+            "description": "Busca propriedades por endereço do proprietário"
+          },
+          "response": []
+        }
+      ],
+      "description": "Queries no banco do orchestrator (PostgreSQL)"
+    },
+    {
+      "name": "4. Property Transfers (with RabbitMQ)",
+      "item": [
+        {
+          "name": "Initiate Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('transfer_id', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": {{property_id}},\n  \"fromProprietario\": \"0x565524f400856766f11562832eB809d889491a01\",\n  \"toProprietario\": \"0x1234567890123456789012345678901234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/property-transfers/initiate",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "property-transfers", "initiate"]
+            },
+            "description": "Inicia transferência e envia job CONFIGURE_TRANSFER para RabbitMQ.\n\n**Fluxo Esperado:**\n1. ✅ Salva transferência no banco (status PENDING)\n2. 📤 Publica job CONFIGURE_TRANSFER na fila\n3. ⏳ Queue Worker processa\n4. ✅ Offchain API configura transferência na blockchain"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transfer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/property-transfers/{{transfer_id}}",
+              "host": ["{{orchestrator_url}}"],
+              "path": ["api", "property-transfers", "{{transfer_id}}"]
+            },
+            "description": "Busca informações da transferência"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transfers by Property",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/property-transfers/property/{{property_id}}",
+              "host": ["{{orchestrator_url}}"],
+              "path": [
+                "api",
+                "property-transfers",
+                "property",
+                "{{property_id}}"
+              ]
+            },
+            "description": "Lista transferências de uma propriedade"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Transfer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/property-transfers/{{transfer_id}}/approve",
+              "host": ["{{orchestrator_url}}"],
+              "path": [
+                "api",
+                "property-transfers",
+                "{{transfer_id}}",
+                "approve"
+              ]
+            },
+            "description": "Aprova transferência (muda status para APPROVED)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Operações de transferência que enviam jobs para RabbitMQ"
+    },
+    {
+      "name": "5. Verify on Blockchain",
+      "item": [
+        {
+          "name": "Check Property on Blockchain",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}",
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}"]
+            },
+            "description": "Verifica se a propriedade foi registrada na blockchain.\n\n⏳ **Aguarde alguns segundos** após o registro no orchestrator para que o job seja processado."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Property Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}/exists",
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}", "exists"]
+            },
+            "description": "Verifica se propriedade existe na blockchain"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Property Owner",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{offchain_api_url}}/api/properties/{{matricula_id}}/owner",
+              "host": ["{{offchain_api_url}}"],
+              "path": ["api", "properties", "{{matricula_id}}", "owner"]
+            },
+            "description": "Busca dono atual da propriedade na blockchain"
+          },
+          "response": []
+        }
+      ],
+      "description": "Verifica se os jobs foram processados e se dados estão na blockchain"
+    },
+    {
+      "name": "6. RabbitMQ Monitoring",
+      "item": [
+        {
+          "name": "List Queues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/queues",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "queues"]
+            },
+            "description": "Lista todas as filas do RabbitMQ"
+          },
+          "response": []
+        },
+        {
+          "name": "Get blockchain-jobs Queue Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "queues", "%2F", "blockchain-jobs"]
+            },
+            "description": "Estatísticas da fila principal:\n- messages: jobs na fila\n- messages_ready: prontos para processar\n- messages_unacknowledged: sendo processados"
+          },
+          "response": []
+        },
+        {
+          "name": "Get DLQ Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/queues/%2F/blockchain-jobs-dlq",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "queues", "%2F", "blockchain-jobs-dlq"]
+            },
+            "description": "Dead Letter Queue - jobs que falharam após 3 tentativas"
+          },
+          "response": []
+        },
+        {
+          "name": "List Connections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:15672/api/connections",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "connections"]
+            },
+            "description": "Lista conexões ativas ao RabbitMQ (orchestrator, worker)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para monitorar RabbitMQ via API"
+    }
+  ],
+  "variable": [
+    {
+      "key": "orchestrator_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "offchain_api_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "property_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "matricula_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transfer_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
+

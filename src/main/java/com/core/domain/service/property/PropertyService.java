@@ -2,8 +2,11 @@ package com.core.domain.service.property;
 
 import com.core.domain.model.property.PropertyModel;
 import com.core.domain.model.property.PropertyType;
+import com.core.domain.service.blockchain.BlockchainJobPublisher;
 import com.core.port.input.property.PropertyUseCase;
 import com.core.port.output.property.PropertyRepositoryPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,10 +18,30 @@ import java.util.List;
 @Service
 public class PropertyService implements PropertyUseCase {
     
-    private final PropertyRepositoryPort propertyRepositoryPort;
+    private static final Logger logger = LoggerFactory.getLogger(PropertyService.class);
     
-    public PropertyService(PropertyRepositoryPort propertyRepositoryPort) {
+    private final PropertyRepositoryPort propertyRepositoryPort;
+    private final BlockchainJobPublisher blockchainJobPublisher;
+    
+    public PropertyService(PropertyRepositoryPort propertyRepositoryPort,
+                          BlockchainJobPublisher blockchainJobPublisher) {
         this.propertyRepositoryPort = propertyRepositoryPort;
+        this.blockchainJobPublisher = blockchainJobPublisher;
+    }
+
+    @Override
+    public PropertyModel updateBlockchainTxHash(Long propertyId, String txHash) {
+        logger.info("Updating blockchain txHash for property {}: {}", propertyId, txHash);
+        
+        PropertyModel property = propertyRepositoryPort.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found: " + propertyId));
+        
+        property.setBlockchainTxHash(txHash);
+        PropertyModel updatedProperty = propertyRepositoryPort.save(property);
+        
+        logger.info("✅ Property {} updated with txHash: {}", propertyId, txHash);
+        
+        return updatedProperty;
     }
     
     @Override
@@ -45,7 +68,38 @@ public class PropertyService implements PropertyUseCase {
         property.setTipo(tipo);
         property.setIsRegular(isRegular != null ? isRegular : true);
         
-        return propertyRepositoryPort.save(property);
+        // Save to database first
+        PropertyModel savedProperty = propertyRepositoryPort.save(property);
+        
+        logger.info("📝 Property registered in database: matriculaId={}, id={}", 
+            matriculaId, savedProperty.getId());
+        
+        // Publish blockchain job asynchronously
+        try {
+            String jobId = blockchainJobPublisher.publishRegisterPropertyJob(
+                savedProperty.getId(), // Include propertyId for webhook callback
+                String.valueOf(matriculaId),
+                String.valueOf(folha),
+                comarca,
+                endereco,
+                String.valueOf(metragem),
+                proprietario,
+                String.valueOf(matriculaOrigem != null ? matriculaOrigem : 0),
+                tipo.ordinal(), // Convert enum to integer
+                isRegular
+            );
+            
+            logger.info("🚀 Blockchain job published: jobId={}, propertyId={}, matriculaId={}", 
+                jobId, savedProperty.getId(), matriculaId);
+            
+        } catch (Exception e) {
+            logger.error("⚠️  Failed to publish blockchain job for property {}: {}", 
+                matriculaId, e.getMessage());
+            // Don't throw - property is already saved in DB
+            // The job can be retried later or handled by monitoring
+        }
+        
+        return savedProperty;
     }
     
     @Override
@@ -79,13 +133,6 @@ public class PropertyService implements PropertyUseCase {
             throw new IllegalArgumentException("Comarca cannot be empty");
         }
         return propertyRepositoryPort.findByComarca(comarca);
-    }
-    
-    @Override
-    public PropertyModel updateBlockchainTxHash(Long id, String txHash) {
-        PropertyModel property = findById(id);
-        property.setBlockchainTxHash(txHash);
-        return propertyRepositoryPort.save(property);
     }
     
     private void validatePropertyInput(Long matriculaId, Long folha, String comarca,

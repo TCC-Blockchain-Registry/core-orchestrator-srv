@@ -3,11 +3,15 @@ package com.core.domain.service.property;
 import com.core.domain.model.property.PropertyModel;
 import com.core.domain.model.property.PropertyTransferModel;
 import com.core.domain.model.property.TransferStatus;
+import com.core.domain.service.blockchain.BlockchainJobPublisher;
 import com.core.port.input.property.PropertyTransferUseCase;
 import com.core.port.output.property.PropertyRepositoryPort;
 import com.core.port.output.property.PropertyTransferRepositoryPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -17,13 +21,18 @@ import java.util.List;
 @Service
 public class PropertyTransferService implements PropertyTransferUseCase {
     
+    private static final Logger logger = LoggerFactory.getLogger(PropertyTransferService.class);
+    
     private final PropertyTransferRepositoryPort transferRepositoryPort;
     private final PropertyRepositoryPort propertyRepositoryPort;
+    private final BlockchainJobPublisher blockchainJobPublisher;
     
     public PropertyTransferService(PropertyTransferRepositoryPort transferRepositoryPort,
-                                  PropertyRepositoryPort propertyRepositoryPort) {
+                                  PropertyRepositoryPort propertyRepositoryPort,
+                                  BlockchainJobPublisher blockchainJobPublisher) {
         this.transferRepositoryPort = transferRepositoryPort;
         this.propertyRepositoryPort = propertyRepositoryPort;
+        this.blockchainJobPublisher = blockchainJobPublisher;
     }
     
     @Override
@@ -53,7 +62,39 @@ public class PropertyTransferService implements PropertyTransferUseCase {
         transfer.setToProprietario(toProprietario);
         // Status is already set to PENDING in constructor
         
-        return transferRepositoryPort.save(transfer);
+        // Save to database first
+        PropertyTransferModel savedTransfer = transferRepositoryPort.save(transfer);
+        
+        logger.info("📝 Transfer initiated in database: transferId={}, propertyId={}, from={}, to={}", 
+            savedTransfer.getId(), propertyId, fromProprietario, toProprietario);
+        
+        // Publish blockchain job asynchronously
+        try {
+            // TODO: Get real approver addresses from database or configuration
+            // For now, using placeholder approvers
+            List<String> approvers = Arrays.asList(
+                "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            );
+            
+            String jobId = blockchainJobPublisher.publishConfigureTransferJob(
+                fromProprietario,
+                toProprietario,
+                String.valueOf(property.getMatriculaId()),
+                approvers
+            );
+            
+            logger.info("🚀 Blockchain transfer configuration job published: jobId={}, transferId={}", 
+                jobId, savedTransfer.getId());
+            
+        } catch (Exception e) {
+            logger.error("⚠️  Failed to publish blockchain job for transfer {}: {}", 
+                savedTransfer.getId(), e.getMessage());
+            // Don't throw - transfer is already saved in DB
+            // The job can be retried later or handled by monitoring
+        }
+        
+        return savedTransfer;
     }
     
     @Override

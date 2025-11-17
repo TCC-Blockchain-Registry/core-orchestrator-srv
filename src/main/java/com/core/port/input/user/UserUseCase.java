@@ -14,13 +14,14 @@ public interface UserUseCase {
      * 
      * @param name User's full name
      * @param email User's email address
+     * @param cpf User's CPF (Brazilian tax ID, optional)
      * @param password User's password
      * @param walletAddress User's Ethereum wallet address (optional)
      * @param role User's role (defaults to USER if null)
      * @return The registered user model
      * @throws IllegalArgumentException if validation fails
      */
-    UserModel registerUser(String name, String email, String password, String walletAddress, UserRole role);
+    UserModel registerUser(String name, String email, String cpf, String password, String walletAddress, UserRole role);
     
     /**
      * Authenticate a user with email and password

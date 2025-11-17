@@ -20,13 +20,54 @@ spring:
   liquibase:
     enabled: false
 
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: rabbitmq-property
+    port: 5672
+    username: admin
+    password: admin123
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 1
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-attempts: 3
+        multiplier: 2
+
 server:
   port: 8080
+
+# JWT Configuration
+jwt:
+  secret: my-super-secret-key-for-jwt-token-generation-minimum-256-bits-long-secure-key
+  expiration: 86400000 # 24 hours in milliseconds
+
+# Actuator Configuration (Health checks, metrics)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  health:
+    rabbitmq:
+      enabled: true
+    db:
+      enabled: true
 
 logging:
   level:
     com.core: DEBUG
     org.springframework.web: DEBUG
     org.springframework.boot.autoconfigure: DEBUG
+    org.springframework.boot.actuate: DEBUG
+    org.springframework.boot.actuate.autoconfigure: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
