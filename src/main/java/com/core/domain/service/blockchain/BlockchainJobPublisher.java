@@ -100,7 +100,9 @@ public class BlockchainJobPublisher {
     
     /**
      * Publish a CONFIGURE_TRANSFER job
+     * ✅ CORREÇÃO: Adicionar transferId para rastreamento e seller/buyer para compatibilidade
      * 
+     * @param transferId Transfer ID from database
      * @param from Seller's Ethereum address
      * @param to Buyer's Ethereum address
      * @param matriculaId Property registration number
@@ -108,39 +110,49 @@ public class BlockchainJobPublisher {
      * @return Job ID
      */
     public String publishConfigureTransferJob(
+            Long transferId,
             String from,
             String to,
             String matriculaId,
             java.util.List<String> approvers) {
         
-        Map<String, Object> payload = Map.of(
-            "from", from,
-            "to", to,
-            "matriculaId", matriculaId,
-            "approvers", approvers
-        );
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("transferId", transferId.toString());
+        payload.put("from", from);
+        payload.put("to", to);
+        // ✅ CORREÇÃO: Adicionar seller/buyer para compatibilidade com Queue Worker
+        payload.put("seller", from);
+        payload.put("buyer", to);
+        payload.put("matriculaId", matriculaId);
+        payload.put("approvers", approvers);
         
         return publishJob(JobType.CONFIGURE_TRANSFER, payload);
     }
     
     /**
      * Publish an APPROVE_TRANSFER job
+     * ✅ CORREÇÃO: Adicionar from/to necessários para Offchain API
      * 
      * @param transferId Transfer ID
+     * @param from Seller's Ethereum address
+     * @param to Buyer's Ethereum address
      * @param matriculaId Property registration number
      * @param approverAddress Approver's Ethereum address
      * @return Job ID
      */
     public String publishApproveTransferJob(
             String transferId,
+            String from,
+            String to,
             String matriculaId,
             String approverAddress) {
         
-        Map<String, Object> payload = Map.of(
-            "transferId", transferId,
-            "matriculaId", matriculaId,
-            "approverAddress", approverAddress
-        );
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("transferId", transferId);
+        payload.put("from", from);
+        payload.put("to", to);
+        payload.put("matriculaId", matriculaId);
+        payload.put("approverAddress", approverAddress);
         
         return publishJob(JobType.APPROVE_TRANSFER, payload);
     }

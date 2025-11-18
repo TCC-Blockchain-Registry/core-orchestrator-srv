@@ -50,4 +50,13 @@ public interface UserUseCase {
      * @throws IllegalArgumentException if user not found or wallet address is invalid
      */
     UserModel updateWalletAddress(Long userId, String walletAddress);
+    
+    /**
+     * Get user by ID
+     * 
+     * @param userId User's ID
+     * @return User model
+     * @throws IllegalArgumentException if user not found
+     */
+    UserModel getUserById(Long userId);
 }

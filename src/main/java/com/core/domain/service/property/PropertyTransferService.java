@@ -70,14 +70,14 @@ public class PropertyTransferService implements PropertyTransferUseCase {
         
         // Publish blockchain job asynchronously
         try {
-            // TODO: Get real approver addresses from database or configuration
-            // For now, using placeholder approvers
+            // ✅ CORREÇÃO: Usar admin wallet como aprovador padrão
+            // Em produção, buscar de uma tabela de aprovadores configurados
             List<String> approvers = Arrays.asList(
-                "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                "0x565524f400856766f11562832eB809d889491a01"  // Admin wallet que tem ORCHESTRATOR_ROLE
             );
             
             String jobId = blockchainJobPublisher.publishConfigureTransferJob(
+                savedTransfer.getId(),  // ✅ CORREÇÃO: Incluir transferId para rastreamento
                 fromProprietario,
                 toProprietario,
                 String.valueOf(property.getMatriculaId()),

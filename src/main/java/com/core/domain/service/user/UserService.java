@@ -116,6 +116,17 @@ public class UserService implements UserUseCase {
         return userRepositoryPort.save(user);
     }
     
+    @Override
+    public UserModel getUserById(Long userId) {
+        // Find user by ID
+        Optional<UserModel> userOptional = userRepositoryPort.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+        
+        return userOptional.get();
+    }
+    
     private void validateUserInput(String name, String email, String cpf, String password, String walletAddress) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty");

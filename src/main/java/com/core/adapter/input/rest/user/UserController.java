@@ -161,4 +161,39 @@ public class UserController implements UserSwaggerApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    
+    /**
+     * Get current user profile from JWT token
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserListResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        try {
+            // Extract token from "Bearer <token>"
+            String token = authHeader.replace("Bearer ", "");
+            
+            // Extract userId from token
+            Long userId = jwtService.extractUserId(token);
+            
+            // Get user by ID
+            UserModel user = userUseCase.getUserById(userId);
+            
+            UserListResponse response = new UserListResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getCpf(),
+                user.getWalletAddress(),
+                user.getRole(),
+                user.getActive(),
+                user.getCreatedAt()
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
