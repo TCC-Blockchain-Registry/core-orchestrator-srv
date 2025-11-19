@@ -1,7 +1,8 @@
 package com.core.domain.service.user;
 
+import com.core.config.JwtService;
+import com.core.domain.model.user.LoginResult;
 import com.core.domain.model.user.UserModel;
-import com.core.domain.model.user.UserRole;
 import com.core.port.input.user.UserUseCase;
 import com.core.port.output.user.UserRepositoryPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,14 +24,27 @@ public class UserService implements UserUseCase {
     
     private final UserRepositoryPort userRepositoryPort;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
     
-    public UserService(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepositoryPort userRepositoryPort, 
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
         this.userRepositoryPort = userRepositoryPort;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+    }
+    
+    /**
+     * Get JwtService instance
+     * Used for direct token operations when needed
+     */
+    public JwtService getJwtService() {
+        return jwtService;
     }
     
     @Override
-    public UserModel registerUser(String name, String email, String cpf, String password, String walletAddress, UserRole role) {
+    public UserModel registerUser(String name, String email, String cpf, String password, String walletAddress) {
         // Validate input parameters
         validateUserInput(name, email, cpf, password, walletAddress);
         
@@ -40,14 +54,11 @@ public class UserService implements UserUseCase {
             throw new IllegalArgumentException("User with email " + email + " already exists");
         }
         
-        // Default to USER role if not specified
-        UserRole userRole = (role != null) ? role : UserRole.USER;
-        
         // Encrypt password
         String encryptedPassword = passwordEncoder.encode(password);
         
         // Create new user with encrypted password
-        UserModel newUser = new UserModel(name, email, cpf, encryptedPassword, walletAddress, userRole);
+        UserModel newUser = new UserModel(name, email, cpf, encryptedPassword, walletAddress);
         
         // Save and return
         return userRepositoryPort.save(newUser);
@@ -83,6 +94,23 @@ public class UserService implements UserUseCase {
         }
         
         return user;
+    }
+    
+    /**
+     * Login user and generate JWT token
+     * 
+     * @param email User's email
+     * @param password User's password
+     * @return LoginResult containing user data and JWT token
+     */
+    public LoginResult loginUserWithToken(String email, String password) {
+        // Authenticate user
+        UserModel user = loginUser(email, password);
+        
+        // Generate JWT token
+        String token = jwtService.generateToken(user.getId(), user.getEmail());
+        
+        return new LoginResult(user, token);
     }
     
     @Override
@@ -153,11 +181,13 @@ public class UserService implements UserUseCase {
             throw new IllegalArgumentException("Password must be at least 6 characters long");
         }
         
-        // Validate wallet address if provided
-        if (walletAddress != null && !walletAddress.trim().isEmpty()) {
-            if (!walletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
-                throw new IllegalArgumentException("Invalid Ethereum wallet address format");
-            }
+        // Wallet address is now required
+        if (walletAddress == null || walletAddress.trim().isEmpty()) {
+            throw new IllegalArgumentException("Wallet address cannot be empty");
+        }
+        
+        if (!walletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
+            throw new IllegalArgumentException("Invalid Ethereum wallet address format");
         }
     }
 }

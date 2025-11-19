@@ -1,7 +1,6 @@
 package com.core.port.input.user;
 
 import com.core.domain.model.user.UserModel;
-import com.core.domain.model.user.UserRole;
 import java.util.List;
 
 /**
@@ -17,12 +16,11 @@ public interface UserUseCase {
      * @param email User's email address
      * @param cpf User's CPF (Brazilian tax ID, optional)
      * @param password User's password
-     * @param walletAddress User's Ethereum wallet address (optional)
-     * @param role User's role (defaults to USER if null)
+     * @param walletAddress User's Ethereum wallet address (required)
      * @return The registered user model
      * @throws IllegalArgumentException if validation fails
      */
-    UserModel registerUser(String name, String email, String cpf, String password, String walletAddress, UserRole role);
+    UserModel registerUser(String name, String email, String cpf, String password, String walletAddress);
     
     /**
      * Authenticate a user with email and password

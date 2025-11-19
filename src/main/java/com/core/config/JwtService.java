@@ -30,14 +30,12 @@ public class JwtService {
      * 
      * @param userId User's ID
      * @param email User's email
-     * @param role User's role
      * @return JWT token string
      */
-    public String generateToken(Long userId, String email, String role) {
+    public String generateToken(Long userId, String email) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("email", email);
-        claims.put("role", role);
         
         return createToken(claims, email);
     }
@@ -83,18 +81,6 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("email", String.class);
-    }
-    
-    /**
-     * Extract role from JWT token
-     */
-    public String extractRole(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("role", String.class);
     }
 }
 

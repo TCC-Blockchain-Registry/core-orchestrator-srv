@@ -15,7 +15,7 @@ public interface PropertyUseCase {
      * Register a new property
      */
     PropertyModel registerProperty(Long matriculaId, Long folha, String comarca, 
-                                   String endereco, Long metragem, String proprietario,
+                                   String endereco, Long metragem, Long proprietario,
                                    Long matriculaOrigem, PropertyType tipo, Boolean isRegular);
     
     /**
@@ -34,9 +34,9 @@ public interface PropertyUseCase {
     List<PropertyModel> findAll();
     
     /**
-     * Find properties by proprietario (wallet address)
+     * Find properties by proprietario (user ID)
      */
-    List<PropertyModel> findByProprietario(String proprietario);
+    List<PropertyModel> findByProprietario(Long proprietario);
     
     /**
      * Find properties by comarca

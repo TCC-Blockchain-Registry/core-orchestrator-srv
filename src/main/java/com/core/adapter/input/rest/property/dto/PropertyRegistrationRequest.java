@@ -24,8 +24,8 @@ public record PropertyRegistrationRequest(
         @Schema(description = "Property size in square meters", example = "250", required = true)
         Long metragem,
         
-        @Schema(description = "Owner wallet address (Ethereum)", example = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", required = true)
-        String proprietario,
+        @Schema(description = "Owner user ID", example = "1", required = true)
+        Long proprietario,
         
         @Schema(description = "Original matricula ID (if applicable)", example = "123450")
         Long matriculaOrigem,

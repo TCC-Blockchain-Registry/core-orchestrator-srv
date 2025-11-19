@@ -1,6 +1,5 @@
 package com.core.adapter.input.rest.user.dto;
 
-import com.core.domain.model.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
@@ -27,9 +26,6 @@ public record UserLoginResponse(
         
         @Schema(description = "User's Ethereum wallet address", example = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")
         String walletAddress,
-        
-        @Schema(description = "User's role", example = "USER")
-        UserRole role,
         
         @Schema(description = "User's account status", example = "true")
         Boolean active,

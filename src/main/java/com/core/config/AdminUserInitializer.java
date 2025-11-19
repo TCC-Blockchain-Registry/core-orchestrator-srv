@@ -1,7 +1,6 @@
 package com.core.config;
 
 import com.core.domain.model.user.UserModel;
-import com.core.domain.model.user.UserRole;
 import com.core.port.output.user.UserRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,7 @@ public class AdminUserInitializer {
     private static final String DEFAULT_ADMIN_NAME = "Administrator";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@core-orchestrator.com";
     private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
+    private static final String DEFAULT_ADMIN_WALLET = "0x0000000000000000000000000000000000000001"; // Default admin wallet
     
     @Bean
     CommandLineRunner initAdminUser(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
@@ -34,14 +34,13 @@ public class AdminUserInitializer {
                     // Encrypt admin password
                     String encryptedPassword = passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD);
                     
-                    // Create admin user with encrypted password (no wallet address)
+                    // Create admin user with encrypted password
                     UserModel adminUser = new UserModel(
                         DEFAULT_ADMIN_NAME,
                         DEFAULT_ADMIN_EMAIL,
                         null,  // Admin doesn't need CPF
                         encryptedPassword,
-                        null,  // Admin doesn't need wallet initially
-                        UserRole.ADMIN
+                        DEFAULT_ADMIN_WALLET  // Default wallet address
                     );
                     
                     userRepositoryPort.save(adminUser);

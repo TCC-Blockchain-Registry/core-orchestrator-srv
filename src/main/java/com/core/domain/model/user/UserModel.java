@@ -14,14 +14,12 @@ public class UserModel {
     private String cpf;  // CPF do usuário (11 dígitos)
     private String password;
     private String walletAddress;  // Endereço da carteira Ethereum (0x...)
-    private UserRole role;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
     // Default constructor
     public UserModel() {
-        this.role = UserRole.USER;
         this.active = true;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -37,27 +35,15 @@ public class UserModel {
         this.walletAddress = walletAddress;
     }
     
-    // Constructor for registration with role
-    public UserModel(String name, String email, String cpf, String password, String walletAddress, UserRole role) {
-        this();
-        this.name = name;
-        this.email = email;
-        this.cpf = cpf;
-        this.password = password;
-        this.walletAddress = walletAddress;
-        this.role = role;
-    }
-    
     // Constructor with all fields
     public UserModel(Long id, String name, String email, String cpf, String password, String walletAddress,
-                    UserRole role, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                    Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
-        this.role = role;
         this.active = active;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -140,14 +126,6 @@ public class UserModel {
     
     public void setWalletAddress(String walletAddress) {
         this.walletAddress = walletAddress;
-    }
-    
-    public UserRole getRole() {
-        return role;
-    }
-    
-    public void setRole(UserRole role) {
-        this.role = role;
     }
     
     public Boolean getActive() {

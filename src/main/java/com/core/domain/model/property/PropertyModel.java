@@ -15,7 +15,7 @@ public class PropertyModel {
     private String comarca;
     private String endereco;
     private Long metragem;
-    private String proprietario;  // Address do proprietário (wallet address)
+    private Long proprietario;  // FK to users table
     private Long matriculaOrigem;
     private PropertyType tipo;
     private Boolean isRegular;
@@ -35,7 +35,7 @@ public class PropertyModel {
     
     // Constructor with all fields
     public PropertyModel(Long id, Long matriculaId, Long folha, String comarca, String endereco,
-                        Long metragem, String proprietario, Long matriculaOrigem, PropertyType tipo,
+                        Long metragem, Long proprietario, Long matriculaOrigem, PropertyType tipo,
                         Boolean isRegular, String blockchainTxHash, LocalDateTime createdAt, 
                         LocalDateTime updatedAt) {
         this.id = id;
@@ -54,7 +54,7 @@ public class PropertyModel {
     }
     
     // Business methods
-    public void updateProprietario(String newProprietario) {
+    public void updateProprietario(Long newProprietario) {
         this.proprietario = newProprietario;
         this.updatedAt = LocalDateTime.now();
     }
@@ -118,11 +118,11 @@ public class PropertyModel {
         this.metragem = metragem;
     }
     
-    public String getProprietario() {
+    public Long getProprietario() {
         return proprietario;
     }
     
-    public void setProprietario(String proprietario) {
+    public void setProprietario(Long proprietario) {
         this.proprietario = proprietario;
     }
     

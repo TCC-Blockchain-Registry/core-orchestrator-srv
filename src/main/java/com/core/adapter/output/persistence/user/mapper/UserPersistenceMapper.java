@@ -28,7 +28,6 @@ public class UserPersistenceMapper {
         entity.setCpf(userModel.getCpf());
         entity.setPassword(userModel.getPassword());
         entity.setWalletAddress(userModel.getWalletAddress());
-        entity.setRole(userModel.getRole());
         entity.setActive(userModel.getActive());
         entity.setCreatedAt(userModel.getCreatedAt());
         entity.setUpdatedAt(userModel.getUpdatedAt());
@@ -54,7 +53,6 @@ public class UserPersistenceMapper {
             userEntity.getCpf(),
             userEntity.getPassword(),
             userEntity.getWalletAddress(),
-            userEntity.getRole(),
             userEntity.getActive(),
             userEntity.getCreatedAt(),
             userEntity.getUpdatedAt()

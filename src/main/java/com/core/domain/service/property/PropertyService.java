@@ -70,7 +70,7 @@ public class PropertyService implements PropertyUseCase {
     
     @Override
     public PropertyModel registerProperty(Long matriculaId, Long folha, String comarca,
-                                         String endereco, Long metragem, String proprietario,
+                                         String endereco, Long metragem, Long proprietario,
                                          Long matriculaOrigem, PropertyType tipo, Boolean isRegular) {
         // Validate input
         validatePropertyInput(matriculaId, folha, comarca, endereco, metragem, proprietario, tipo);
@@ -108,7 +108,7 @@ public class PropertyService implements PropertyUseCase {
                 comarca,
                 endereco,
                 String.valueOf(metragem),
-                proprietario,
+                String.valueOf(proprietario), // Convert Long (userId) to String
                 String.valueOf(matriculaOrigem != null ? matriculaOrigem : 0),
                 tipo.ordinal(), // Convert enum to integer
                 isRegular
@@ -152,9 +152,9 @@ public class PropertyService implements PropertyUseCase {
     }
     
     @Override
-    public List<PropertyModel> findByProprietario(String proprietario) {
-        if (proprietario == null || proprietario.trim().isEmpty()) {
-            throw new IllegalArgumentException("Proprietario cannot be empty");
+    public List<PropertyModel> findByProprietario(Long proprietario) {
+        if (proprietario == null) {
+            throw new IllegalArgumentException("Proprietario cannot be null");
         }
         return propertyRepositoryPort.findByProprietario(proprietario);
     }
@@ -168,7 +168,7 @@ public class PropertyService implements PropertyUseCase {
     }
     
     private void validatePropertyInput(Long matriculaId, Long folha, String comarca,
-                                       String endereco, Long metragem, String proprietario,
+                                       String endereco, Long metragem, Long proprietario,
                                        PropertyType tipo) {
         if (matriculaId == null) {
             throw new IllegalArgumentException("Matricula ID cannot be null");
@@ -190,13 +190,8 @@ public class PropertyService implements PropertyUseCase {
             throw new IllegalArgumentException("Metragem must be greater than 0");
         }
         
-        if (proprietario == null || proprietario.trim().isEmpty()) {
-            throw new IllegalArgumentException("Proprietario cannot be empty");
-        }
-        
-        // Validate Ethereum address format (0x + 40 hex chars)
-        if (!proprietario.matches("^0x[a-fA-F0-9]{40}$")) {
-            throw new IllegalArgumentException("Invalid Ethereum address format for proprietario");
+        if (proprietario == null) {
+            throw new IllegalArgumentException("Proprietario (userId) cannot be null");
         }
         
         if (tipo == null) {

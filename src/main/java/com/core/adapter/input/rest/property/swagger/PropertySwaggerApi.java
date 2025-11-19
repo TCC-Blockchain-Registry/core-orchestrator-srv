@@ -56,19 +56,5 @@ public interface PropertySwaggerApi {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     ResponseEntity<List<PropertyResponse>> getAllProperties();
-    
-    @Operation(
-        summary = "Get properties by proprietario",
-        description = "Retrieves all properties owned by a specific wallet address"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Properties retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid proprietario address"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    ResponseEntity<List<PropertyResponse>> getPropertiesByProprietario(
-        @Parameter(description = "Owner wallet address", required = true)
-        String proprietario
-    );
 }
 

@@ -31,9 +31,9 @@ public interface PropertyRepositoryPort {
     List<PropertyModel> findAll();
     
     /**
-     * Find properties by proprietario (wallet address)
+     * Find properties by proprietario (user ID)
      */
-    List<PropertyModel> findByProprietario(String proprietario);
+    List<PropertyModel> findByProprietario(Long proprietario);
     
     /**
      * Find properties by comarca

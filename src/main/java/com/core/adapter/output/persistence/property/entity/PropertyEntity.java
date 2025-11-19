@@ -1,5 +1,6 @@
 package com.core.adapter.output.persistence.property.entity;
 
+import com.core.adapter.output.persistence.user.entity.UserEntity;
 import com.core.domain.model.property.PropertyType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -32,8 +33,9 @@ public class PropertyEntity {
     @Column(name = "metragem", nullable = false)
     private Long metragem;
     
-    @Column(name = "proprietario", nullable = false, length = 42)
-    private String proprietario;  // Ethereum address (0x...)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proprietario", nullable = false, foreignKey = @ForeignKey(name = "fk_property_user"))
+    private UserEntity proprietario;  // FK to users table
     
     @Column(name = "matricula_origem")
     private Long matriculaOrigem;
@@ -65,25 +67,6 @@ public class PropertyEntity {
     
     // Default constructor
     public PropertyEntity() {
-    }
-    
-    // Constructor with all fields
-    public PropertyEntity(Long matriculaId, Long folha, String comarca, String endereco,
-                         Long metragem, String proprietario, Long matriculaOrigem, 
-                         PropertyType tipo, Boolean isRegular, String blockchainTxHash,
-                         LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.matriculaId = matriculaId;
-        this.folha = folha;
-        this.comarca = comarca;
-        this.endereco = endereco;
-        this.metragem = metragem;
-        this.proprietario = proprietario;
-        this.matriculaOrigem = matriculaOrigem;
-        this.tipo = tipo;
-        this.isRegular = isRegular;
-        this.blockchainTxHash = blockchainTxHash;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
     
     // Getters and Setters
@@ -135,11 +118,11 @@ public class PropertyEntity {
         this.metragem = metragem;
     }
     
-    public String getProprietario() {
+    public UserEntity getProprietario() {
         return proprietario;
     }
     
-    public void setProprietario(String proprietario) {
+    public void setProprietario(UserEntity proprietario) {
         this.proprietario = proprietario;
     }
     

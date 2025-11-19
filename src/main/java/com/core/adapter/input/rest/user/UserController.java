@@ -6,9 +6,11 @@ import com.core.adapter.input.rest.user.dto.UserLoginRequest;
 import com.core.adapter.input.rest.user.dto.UserLoginResponse;
 import com.core.adapter.input.rest.user.dto.UserRegistrationRequest;
 import com.core.adapter.input.rest.user.dto.UserRegistrationResponse;
+import com.core.adapter.input.rest.user.mapper.UserResponseMapper;
 import com.core.adapter.input.rest.user.swagger.UserSwaggerApi;
-import com.core.config.JwtService;
+import com.core.domain.model.user.LoginResult;
 import com.core.domain.model.user.UserModel;
+import com.core.domain.service.user.UserService;
 import com.core.port.input.user.UserUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +28,11 @@ import java.util.stream.Collectors;
 public class UserController implements UserSwaggerApi {
     
     private final UserUseCase userUseCase;
-    private final JwtService jwtService;
+    private final UserService userService;
     
-    public UserController(UserUseCase userUseCase, JwtService jwtService) {
+    public UserController(UserUseCase userUseCase, UserService userService) {
         this.userUseCase = userUseCase;
-        this.jwtService = jwtService;
+        this.userService = userService;
     }
     
     @Override
@@ -42,20 +44,10 @@ public class UserController implements UserSwaggerApi {
                 request.email(),
                 request.cpf(),
                 request.password(),
-                request.walletAddress(),
-                request.role()
+                request.walletAddress()
             );
             
-            UserRegistrationResponse response = new UserRegistrationResponse(
-                registeredUser.getId(),
-                registeredUser.getName(),
-                registeredUser.getEmail(),
-                registeredUser.getCpf(),
-                registeredUser.getWalletAddress(),
-                registeredUser.getRole(),
-                registeredUser.getActive(),
-                registeredUser.getCreatedAt()
-            );
+            UserRegistrationResponse response = UserResponseMapper.toRegistrationResponse(registeredUser);
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
@@ -71,29 +63,16 @@ public class UserController implements UserSwaggerApi {
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponse> loginUser(@RequestBody UserLoginRequest request) {
         try {
-            UserModel authenticatedUser = userUseCase.loginUser(
+            // Login and generate JWT token (handled in service layer)
+            LoginResult loginResult = userService.loginUserWithToken(
                 request.email(),
                 request.password()
             );
             
-            // Generate JWT token
-            String token = jwtService.generateToken(
-                authenticatedUser.getId(),
-                authenticatedUser.getEmail(),
-                authenticatedUser.getRole().name()
-            );
-            
-            UserLoginResponse response = new UserLoginResponse(
-                token,
-                authenticatedUser.getId(),
-                authenticatedUser.getName(),
-                authenticatedUser.getEmail(),
-                authenticatedUser.getCpf(),
-                authenticatedUser.getWalletAddress(),
-                authenticatedUser.getRole(),
-                authenticatedUser.getActive(),
-                authenticatedUser.getCreatedAt(),
-                "Login successful"
+            // Map to response DTO using mapper
+            UserLoginResponse response = UserResponseMapper.toLoginResponse(
+                loginResult.getUser(),
+                loginResult.getToken()
             );
             
             return ResponseEntity.ok(response);
@@ -112,16 +91,7 @@ public class UserController implements UserSwaggerApi {
             List<UserModel> users = userUseCase.getAllUsers();
             
             List<UserListResponse> response = users.stream()
-                    .map(user -> new UserListResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getCpf(),
-                        user.getWalletAddress(),
-                        user.getRole(),
-                        user.getActive(),
-                        user.getCreatedAt()
-                    ))
+                    .map(UserResponseMapper::toListResponse)
                     .collect(Collectors.toList());
             
             return ResponseEntity.ok(response);
@@ -139,16 +109,7 @@ public class UserController implements UserSwaggerApi {
         try {
             UserModel updatedUser = userUseCase.updateWalletAddress(userId, request.walletAddress());
             
-            UserListResponse response = new UserListResponse(
-                updatedUser.getId(),
-                updatedUser.getName(),
-                updatedUser.getEmail(),
-                updatedUser.getCpf(),
-                updatedUser.getWalletAddress(),
-                updatedUser.getRole(),
-                updatedUser.getActive(),
-                updatedUser.getCreatedAt()
-            );
+            UserListResponse response = UserResponseMapper.toListResponse(updatedUser);
             
             return ResponseEntity.ok(response);
             
@@ -171,22 +132,13 @@ public class UserController implements UserSwaggerApi {
             // Extract token from "Bearer <token>"
             String token = authHeader.replace("Bearer ", "");
             
-            // Extract userId from token
-            Long userId = jwtService.extractUserId(token);
+            // Extract userId from token using JwtService
+            Long userId = userService.getJwtService().extractUserId(token);
             
             // Get user by ID
             UserModel user = userUseCase.getUserById(userId);
             
-            UserListResponse response = new UserListResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getCpf(),
-                user.getWalletAddress(),
-                user.getRole(),
-                user.getActive(),
-                user.getCreatedAt()
-            );
+            UserListResponse response = UserResponseMapper.toListResponse(user);
             
             return ResponseEntity.ok(response);
             
