@@ -53,8 +53,6 @@ public class HibernateConfig {
         // Add annotated entity classes
         configuration.addAnnotatedClass(com.core.adapter.output.persistence.user.entity.UserEntity.class);
         configuration.addAnnotatedClass(com.core.adapter.output.persistence.property.entity.PropertyEntity.class);
-        configuration.addAnnotatedClass(com.core.adapter.output.persistence.property.entity.PropertyTransferEntity.class);
-        configuration.addAnnotatedClass(com.core.adapter.output.persistence.property.entity.PropertyTransferApprovalEntity.class);
         
         StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
                 .applySettings(configuration.getProperties());

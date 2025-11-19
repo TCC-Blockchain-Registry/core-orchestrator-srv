@@ -37,11 +37,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Long userId = jwtService.extractUserId(token);
                 String email = jwtService.extractEmail(token);
-                String role = jwtService.extractRole(token);
                 
                 request.setAttribute("userId", userId);
                 request.setAttribute("userEmail", email);
-                request.setAttribute("userRole", role);
                 request.setAttribute("authenticated", true);
             } catch (Exception e) {
                 // Token inválido - não adiciona atributos

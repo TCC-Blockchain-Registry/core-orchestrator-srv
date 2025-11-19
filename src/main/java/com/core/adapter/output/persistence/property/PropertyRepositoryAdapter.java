@@ -104,13 +104,14 @@ public class PropertyRepositoryAdapter implements PropertyRepositoryPort {
     }
     
     @Override
-    public List<PropertyModel> findByProprietario(String proprietario) {
+    public List<PropertyModel> findByProprietario(Long proprietarioId) {
         Session session = sessionFactory.openSession();
         
         try {
-            String hql = "FROM PropertyEntity p WHERE p.proprietario = :proprietario";
+            // Query by user ID using the relationship
+            String hql = "FROM PropertyEntity p WHERE p.proprietario.id = :proprietarioId";
             List<PropertyEntity> entities = session.createQuery(hql, PropertyEntity.class)
-                    .setParameter("proprietario", proprietario)
+                    .setParameter("proprietarioId", proprietarioId)
                     .list();
             
             return entities.stream()

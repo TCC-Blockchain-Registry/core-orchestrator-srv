@@ -1,6 +1,5 @@
 package com.core.adapter.output.persistence.user.entity;
 
-import com.core.domain.model.user.UserRole;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -28,12 +27,8 @@ public class UserEntity {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
     
-    @Column(name = "wallet_address", unique = true, length = 42)
+    @Column(name = "wallet_address", nullable = false, unique = true, length = 42)
     private String walletAddress;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
-    private UserRole role;
     
     @Column(name = "active", nullable = false)
     private Boolean active;
@@ -50,13 +45,12 @@ public class UserEntity {
     
     // Constructor with all fields
     public UserEntity(String name, String email, String cpf, String password, String walletAddress,
-                     UserRole role, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                     Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.name = name;
         this.email = email;
         this.cpf = cpf;
         this.password = password;
         this.walletAddress = walletAddress;
-        this.role = role;
         this.active = active;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -109,14 +103,6 @@ public class UserEntity {
     
     public void setWalletAddress(String walletAddress) {
         this.walletAddress = walletAddress;
-    }
-    
-    public UserRole getRole() {
-        return role;
-    }
-    
-    public void setRole(UserRole role) {
-        this.role = role;
     }
     
     public Boolean getActive() {
