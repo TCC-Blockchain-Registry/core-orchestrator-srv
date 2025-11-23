@@ -67,13 +67,13 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public Optional<UserModel> findByEmail(String email) {
         Session session = sessionFactory.openSession();
-        
+
         try {
             String hql = "FROM UserEntity u WHERE u.email = :email";
             UserEntity entity = session.createQuery(hql, UserEntity.class)
                     .setParameter("email", email)
                     .uniqueResult();
-            
+
             return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
         } catch (Exception e) {
             throw new RuntimeException("Failed to find user by email", e);
@@ -81,7 +81,25 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
             session.close();
         }
     }
-    
+
+    @Override
+    public Optional<UserModel> findByWalletAddress(String walletAddress) {
+        Session session = sessionFactory.openSession();
+
+        try {
+            String hql = "FROM UserEntity u WHERE u.walletAddress = :walletAddress";
+            UserEntity entity = session.createQuery(hql, UserEntity.class)
+                    .setParameter("walletAddress", walletAddress)
+                    .uniqueResult();
+
+            return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find user by wallet address", e);
+        } finally {
+            session.close();
+        }
+    }
+
     @Override
     public List<UserModel> findAll() {
         Session session = sessionFactory.openSession();

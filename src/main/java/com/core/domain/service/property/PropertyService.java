@@ -1,9 +1,11 @@
 package com.core.domain.service.property;
 
 import com.core.domain.model.property.PropertyModel;
+import com.core.domain.model.property.PropertyStatus;
 import com.core.domain.model.property.PropertyType;
-import com.core.domain.service.blockchain.BlockchainJobPublisher;
 import com.core.port.input.property.PropertyUseCase;
+import com.core.port.output.user.UserRepositoryPort;
+import com.core.port.output.messaging.BlockchainJobPublisherPort;
 import com.core.port.output.property.PropertyRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,16 +19,19 @@ import java.util.List;
  */
 @Service
 public class PropertyService implements PropertyUseCase {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(PropertyService.class);
-    
+
     private final PropertyRepositoryPort propertyRepositoryPort;
-    private final BlockchainJobPublisher blockchainJobPublisher;
-    
+    private final BlockchainJobPublisherPort jobPublisherPort;
+    private final UserRepositoryPort userRepositoryPort;
+
     public PropertyService(PropertyRepositoryPort propertyRepositoryPort,
-                          BlockchainJobPublisher blockchainJobPublisher) {
+                          BlockchainJobPublisherPort jobPublisherPort,
+                          UserRepositoryPort userRepositoryPort) {
         this.propertyRepositoryPort = propertyRepositoryPort;
-        this.blockchainJobPublisher = blockchainJobPublisher;
+        this.jobPublisherPort = jobPublisherPort;
+        this.userRepositoryPort = userRepositoryPort;
     }
 
     @Override
@@ -45,26 +50,26 @@ public class PropertyService implements PropertyUseCase {
     }
     
     public PropertyModel updateRequestHash(Long propertyId, String requestHash, String approvalStatus) {
-        logger.info("Updating requestHash for property {}: requestHash={}, status={}", 
+        logger.info("Updating requestHash for property {}: requestHash={}, status={}",
             propertyId, requestHash, approvalStatus);
-        
+
         PropertyModel property = propertyRepositoryPort.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found: " + propertyId));
-        
+
         property.setRequestHash(requestHash);
         property.setApprovalStatus(approvalStatus != null ? approvalStatus : "PENDING_APPROVALS");
-        
+
         // Update status based on approvalStatus
         if ("PENDING_APPROVALS".equals(approvalStatus)) {
-            property.setStatus("PENDING_APPROVALS");
+            property.setStatus(PropertyStatus.PROCESSANDO_REGISTRO);
         } else if ("EXECUTED".equals(approvalStatus)) {
-            property.setStatus("EXECUTED");
+            property.setStatus(PropertyStatus.OK);
         }
-        
+
         PropertyModel updatedProperty = propertyRepositoryPort.save(property);
-        
+
         logger.info("✅ Property {} updated with requestHash for V2 approval system", propertyId);
-        
+
         return updatedProperty;
     }
     
@@ -91,17 +96,17 @@ public class PropertyService implements PropertyUseCase {
         property.setMatriculaOrigem(matriculaOrigem);
         property.setTipo(tipo);
         property.setIsRegular(isRegular != null ? isRegular : true);
-        property.setStatus("PENDING");  // Status inicial
-        
+        property.setStatus(PropertyStatus.PENDENTE);  // Status inicial
+
         // Save to database first
         PropertyModel savedProperty = propertyRepositoryPort.save(property);
-        
-        logger.info("📝 Property registered in database: matriculaId={}, id={}", 
+
+        logger.info("📝 Property registered in database: matriculaId={}, id={}",
             matriculaId, savedProperty.getId());
-        
+
         // Publish blockchain job asynchronously
         try {
-            String jobId = blockchainJobPublisher.publishRegisterPropertyJob(
+            String jobId = jobPublisherPort.publishRegisterPropertyJob(
                 savedProperty.getId(), // Include propertyId for webhook callback
                 String.valueOf(matriculaId),
                 String.valueOf(folha),
@@ -113,20 +118,18 @@ public class PropertyService implements PropertyUseCase {
                 tipo.ordinal(), // Convert enum to integer
                 isRegular
             );
-            
-            logger.info("🚀 Blockchain job published: jobId={}, propertyId={}, matriculaId={}", 
+
+            logger.info("🚀 Blockchain job published: jobId={}, propertyId={}, matriculaId={}",
                 jobId, savedProperty.getId(), matriculaId);
-            
-            // Update status to PROCESSING
-            savedProperty.setStatus("PROCESSING");
+
+            // Update status to PROCESSANDO_REGISTRO (being processed on blockchain)
+            savedProperty.setStatus(PropertyStatus.PROCESSANDO_REGISTRO);
             savedProperty = propertyRepositoryPort.save(savedProperty);
-            
+
         } catch (Exception e) {
-            logger.error("⚠️  Failed to publish blockchain job for property {}: {}", 
+            logger.error("⚠️  Failed to publish blockchain job for property {}: {}",
                 matriculaId, e.getMessage());
-            // Update status to FAILED
-            savedProperty.setStatus("FAILED");
-            savedProperty = propertyRepositoryPort.save(savedProperty);
+            // Keep as PENDENTE if job publishing fails - can be retried later
             // Don't throw - property is already saved in DB
             // The job can be retried later or handled by monitoring
         }
@@ -166,7 +169,86 @@ public class PropertyService implements PropertyUseCase {
         }
         return propertyRepositoryPort.findByComarca(comarca);
     }
-    
+
+    /**
+     * Updates the owner of a property and sets status to OK
+     * Called when a property transfer is completed on blockchain
+     *
+     * @param matriculaId The property matricula ID
+     * @param newOwnerAddress The blockchain wallet address of the new owner
+     * @return Updated property model
+     */
+    public PropertyModel updateOwner(Long matriculaId, String newOwnerAddress) {
+        logger.info("Updating owner for property {}: newOwner={}", matriculaId, newOwnerAddress);
+
+        PropertyModel property = propertyRepositoryPort.findByMatriculaId(matriculaId)
+                .orElseThrow(() -> new RuntimeException("Property not found: " + matriculaId));
+
+        // Find user by wallet address
+        var user = userRepositoryPort.findByWalletAddress(newOwnerAddress)
+                .orElseThrow(() -> new RuntimeException("User not found with wallet address: " + newOwnerAddress));
+
+        // Update owner using business method
+        property.updateProprietario(user.getId());
+
+        // Set status to OK (transfer completed)
+        property.setStatus(PropertyStatus.OK);
+
+        PropertyModel updatedProperty = propertyRepositoryPort.save(property);
+
+        logger.info("✅ Property {} owner updated to user {} (wallet: {}), status: OK",
+            matriculaId, user.getId(), newOwnerAddress);
+
+        return updatedProperty;
+    }
+
+    /**
+     * Initiates a property transfer, setting status to EM_TRANSFERENCIA
+     *
+     * @param matriculaId The property matricula ID
+     * @return Updated property model
+     */
+    public PropertyModel initiateTransfer(Long matriculaId) {
+        logger.info("Initiating transfer for property {}", matriculaId);
+
+        PropertyModel property = propertyRepositoryPort.findByMatriculaId(matriculaId)
+                .orElseThrow(() -> new RuntimeException("Property not found: " + matriculaId));
+
+        // Only allow transfer if property is in OK status
+        if (property.getStatus() != PropertyStatus.OK) {
+            throw new IllegalStateException("Property must be in OK status to initiate transfer. Current status: "
+                + property.getStatus());
+        }
+
+        property.setStatus(PropertyStatus.EM_TRANSFERENCIA);
+        PropertyModel updatedProperty = propertyRepositoryPort.save(property);
+
+        logger.info("✅ Property {} status updated to EM_TRANSFERENCIA", matriculaId);
+
+        return updatedProperty;
+    }
+
+    /**
+     * Updates the status of a property
+     *
+     * @param matriculaId The property matricula ID
+     * @param newStatus The new status
+     * @return Updated property model
+     */
+    public PropertyModel updateStatus(Long matriculaId, PropertyStatus newStatus) {
+        logger.info("Updating status for property {}: newStatus={}", matriculaId, newStatus);
+
+        PropertyModel property = propertyRepositoryPort.findByMatriculaId(matriculaId)
+                .orElseThrow(() -> new RuntimeException("Property not found: " + matriculaId));
+
+        property.setStatus(newStatus);
+        PropertyModel updatedProperty = propertyRepositoryPort.save(property);
+
+        logger.info("✅ Property {} status updated to {}", matriculaId, newStatus);
+
+        return updatedProperty;
+    }
+
     private void validatePropertyInput(Long matriculaId, Long folha, String comarca,
                                        String endereco, Long metragem, Long proprietario,
                                        PropertyType tipo) {

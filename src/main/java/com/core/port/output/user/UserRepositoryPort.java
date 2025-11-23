@@ -28,15 +28,23 @@ public interface UserRepositoryPort {
     
     /**
      * Find a user by email address
-     * 
+     *
      * @param email The email to search for
      * @return Optional containing the user if found, empty otherwise
      */
     Optional<UserModel> findByEmail(String email);
-    
+
+    /**
+     * Find a user by wallet address
+     *
+     * @param walletAddress The blockchain wallet address to search for
+     * @return Optional containing the user if found, empty otherwise
+     */
+    Optional<UserModel> findByWalletAddress(String walletAddress);
+
     /**
      * Find all users
-     * 
+     *
      * @return List of all users in the system
      */
     List<UserModel> findAll();

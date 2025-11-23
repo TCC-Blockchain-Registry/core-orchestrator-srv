@@ -1,6 +1,7 @@
 package com.core.adapter.output.persistence.property.entity;
 
 import com.core.adapter.output.persistence.user.entity.UserEntity;
+import com.core.domain.model.property.PropertyStatus;
 import com.core.domain.model.property.PropertyType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -55,9 +56,10 @@ public class PropertyEntity {
     
     @Column(name = "approval_status", length = 20)
     private String approvalStatus;  // PENDING_APPROVALS, APPROVED, EXECUTED
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 30)
-    private String status;  // PENDING, PROCESSING, PENDING_APPROVALS, EXECUTED, FAILED
+    private PropertyStatus status;  // PENDENTE, PROCESSANDO_REGISTRO, EM_TRANSFERENCIA, OK
     
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -174,11 +176,11 @@ public class PropertyEntity {
         this.approvalStatus = approvalStatus;
     }
     
-    public String getStatus() {
+    public PropertyStatus getStatus() {
         return status;
     }
-    
-    public void setStatus(String status) {
+
+    public void setStatus(PropertyStatus status) {
         this.status = status;
     }
     

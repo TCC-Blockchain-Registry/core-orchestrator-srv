@@ -1312,6 +1312,161 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "10. Transfers - NEW API (Orchestrator)",
+      "description": "Nova API de transferências integrada com o Orchestrator.\n\n**Fluxo completo:**\n1. Initiate Transfer (comprador solicita)\n2. Approve (3x - Cartório, Prefeitura, IF)\n3. Accept (comprador confirma)\n4. Auto-execução quando última aprovação\n\n**Status:** PENDENTE → CONFIGURANDO → AGUARDANDO_APROVACOES → CONCLUIDA",
+      "item": [
+        {
+          "name": "1. Initiate Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matriculaId\": 123456,\n  \"buyerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers/initiate",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "initiate"
+              ]
+            },
+            "description": "Inicia uma transferência de propriedade.\n\n**Input:**\n- matriculaId: ID da propriedade (deve estar em status OK)\n- buyerId: ID do usuário comprador\n\n**Output:**\n- Transfer criado com status PENDENTE\n- Job CONFIGURE_TRANSFER publicado no RabbitMQ\n- Status atualizado para CONFIGURANDO"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Transfer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers/{{transfer_id}}",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "{{transfer_id}}"
+              ]
+            },
+            "description": "Busca uma transferência por ID.\n\n**Response:**\n- id, matriculaId, sellerId, buyerId\n- status (PENDENTE, CONFIGURANDO, AGUARDANDO_APROVACOES, CONCLUIDA)\n- blockchainTxHash, requestHash\n- createdAt, updatedAt"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Transfers by Property",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers/property/{{matricula_id}}",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "property",
+                "{{matricula_id}}"
+              ]
+            },
+            "description": "Lista todas as transferências de uma propriedade específica.\n\n**Útil para:**\n- Ver histórico de transferências\n- Verificar se há transfer ativo\n- Acompanhar status de transferência em andamento"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Approve Transfer (Approver)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approverId\": 3\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers/{{transfer_id}}/approve",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "{{transfer_id}}",
+                "approve"
+              ]
+            },
+            "description": "Aprovador (Cartório, Prefeitura ou Instituição Financeira) aprova a transferência.\n\n**Input:**\n- approverId: ID do usuário aprovador\n\n**Fluxo:**\n- Publica job APPROVE_TRANSFER no RabbitMQ\n- Queue Worker processa\n- Offchain API registra aprovação no smart contract\n- Após 3ª aprovação + buyer acceptance → auto-executa"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Accept Transfer (Buyer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"buyerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers/{{transfer_id}}/accept",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "{{transfer_id}}",
+                "accept"
+              ]
+            },
+            "description": "Comprador aceita a transferência.\n\n**Input:**\n- buyerId: ID do usuário comprador (deve ser o mesmo da transferência)\n\n**Importante:**\n- Buyer deve aceitar ANTES ou DEPOIS das aprovações\n- Transferência só executa quando: 3 aprovações + buyer acceptance\n- Smart contract verifica tudo automaticamente"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get All Transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orchestrator_url}}/api/transfers",
+              "host": [
+                "{{orchestrator_url}}"
+              ],
+              "path": [
+                "api",
+                "transfers"
+              ]
+            },
+            "description": "Lista todas as transferências do sistema (endpoint admin).\n\n**Ordenação:** Mais recentes primeiro (createdAt DESC)"
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [

@@ -82,16 +82,18 @@ pull_images() {
 }
 
 # Função para subir os serviços
+# Parâmetro opcional: --build para forçar reconstrução da imagem Docker
 start_services() {
+    local build_flag="${1:-}"
     print_message "Subindo PostgreSQL e aplicação Spring Boot..."
-    
+
     # Verificar se docker-compose ou docker compose está disponível
     if command -v docker-compose &> /dev/null; then
-        docker-compose up -d
+        docker-compose up -d $build_flag
     else
-        docker compose up -d
+        docker compose up -d $build_flag
     fi
-    
+
     print_message "Serviços iniciados com sucesso!"
     print_message "PostgreSQL disponível em: localhost:5432"
     print_message "Spring Boot disponível em: http://localhost:8080"
@@ -208,7 +210,7 @@ main() {
         "rebuild")
             stop_services
             build_project
-            start_services
+            start_services --build
             ;;
         "logs")
             show_logs

@@ -1,5 +1,6 @@
 package com.core.adapter.input.rest.property.dto;
 
+import com.core.domain.model.property.PropertyStatus;
 import com.core.domain.model.property.PropertyType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -42,10 +43,10 @@ public record PropertyResponse(
         
         @Schema(description = "Blockchain transaction hash", example = "0x...")
         String blockchainTxHash,
-        
-        @Schema(description = "Property status", example = "PENDING", allowableValues = {"PENDING", "PROCESSING", "PENDING_APPROVALS", "EXECUTED", "FAILED"})
-        String status,
-        
+
+        @Schema(description = "Property status", example = "PENDENTE", allowableValues = {"PENDENTE", "PROCESSANDO_REGISTRO", "EM_TRANSFERENCIA", "OK"})
+        PropertyStatus status,
+
         @Schema(description = "Creation timestamp")
         LocalDateTime createdAt,
         
