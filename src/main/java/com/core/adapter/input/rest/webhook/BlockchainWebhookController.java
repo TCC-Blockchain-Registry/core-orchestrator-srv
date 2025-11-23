@@ -2,6 +2,7 @@ package com.core.adapter.input.rest.webhook;
 
 import com.core.adapter.input.rest.webhook.dto.BlockchainUpdateRequest;
 import com.core.domain.service.property.PropertyService;
+import com.core.domain.service.transfer.TransferService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -21,11 +22,13 @@ public class BlockchainWebhookController {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockchainWebhookController.class);
     private final PropertyService propertyService;
+    private final TransferService transferService;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final String offchainApiUrl = "http://offchain-api:3000";
 
-    public BlockchainWebhookController(PropertyService propertyService) {
+    public BlockchainWebhookController(PropertyService propertyService, TransferService transferService) {
         this.propertyService = propertyService;
+        this.transferService = transferService;
     }
 
     @PatchMapping("/properties/{id}")
@@ -108,6 +111,110 @@ public class BlockchainWebhookController {
             logger.error("❌ Failed to update property {}: {}", id, e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/properties/transferred")
+    @Operation(summary = "Notificar transferência de propriedade concluída na blockchain")
+    public ResponseEntity<Void> handlePropertyTransferred(
+            @RequestBody PropertyTransferredRequest request
+    ) {
+        logger.info("📨 Webhook received: Property {} transferred from {} to {}",
+            request.getMatriculaId(), request.getFrom(), request.getTo());
+
+        try {
+            // Update owner and set status to OK
+            propertyService.updateOwner(request.getMatriculaId(), request.getTo());
+
+            logger.info("✅ Property {} transferred successfully to {}",
+                request.getMatriculaId(), request.getTo());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update property {} transfer: {}",
+                request.getMatriculaId(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/properties/transfer-configured")
+    @Operation(summary = "Notificar que transferência foi configurada na blockchain")
+    public ResponseEntity<Void> handleTransferConfigured(
+            @RequestBody TransferConfiguredRequest request
+    ) {
+        logger.info("📨 Webhook received: Transfer configured for property {} from {} to {}",
+            request.getMatriculaId(), request.getSeller(), request.getBuyer());
+
+        try {
+            // Set status to EM_TRANSFERENCIA
+            propertyService.initiateTransfer(request.getMatriculaId());
+
+            logger.info("✅ Property {} status updated to EM_TRANSFERENCIA", request.getMatriculaId());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update property {} status: {}",
+                request.getMatriculaId(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PatchMapping("/transfers/{id}")
+    @Operation(summary = "Atualizar hash de transação blockchain de uma transferência")
+    public ResponseEntity<Void> updateTransferBlockchainTx(
+            @PathVariable Long id,
+            @RequestBody BlockchainUpdateRequest request
+    ) {
+        logger.info("📨 Webhook received: Update transfer {} with txHash {}",
+            id, request.getTransactionHash());
+
+        try {
+            // Update transfer with blockchain transaction hash
+            transferService.updateBlockchainTxHash(id, request.getTransactionHash());
+
+            logger.info("✅ Transfer {} updated successfully", id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update transfer {}: {}", id, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // DTO classes for webhook requests
+
+    public static class PropertyTransferredRequest {
+        private Long matriculaId;
+        private String from;
+        private String to;
+        private String transactionHash;
+
+        public Long getMatriculaId() { return matriculaId; }
+        public void setMatriculaId(Long matriculaId) { this.matriculaId = matriculaId; }
+
+        public String getFrom() { return from; }
+        public void setFrom(String from) { this.from = from; }
+
+        public String getTo() { return to; }
+        public void setTo(String to) { this.to = to; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class TransferConfiguredRequest {
+        private Long matriculaId;
+        private String seller;
+        private String buyer;
+        private String transactionHash;
+
+        public Long getMatriculaId() { return matriculaId; }
+        public void setMatriculaId(Long matriculaId) { this.matriculaId = matriculaId; }
+
+        public String getSeller() { return seller; }
+        public void setSeller(String seller) { this.seller = seller; }
+
+        public String getBuyer() { return buyer; }
+        public void setBuyer(String buyer) { this.buyer = buyer; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
     }
 }
 

@@ -2,6 +2,7 @@ package com.core.adapter.input.rest.property;
 
 import com.core.adapter.input.rest.property.dto.PropertyRegistrationRequest;
 import com.core.adapter.input.rest.property.dto.PropertyResponse;
+import com.core.adapter.input.rest.property.mapper.PropertyResponseMapper;
 import com.core.adapter.input.rest.property.swagger.PropertySwaggerApi;
 import com.core.domain.model.property.PropertyModel;
 import com.core.domain.model.user.UserModel;
@@ -48,8 +49,8 @@ public class PropertyController implements PropertySwaggerApi {
                 request.tipo(),
                 request.isRegular()
             );
-            
-            PropertyResponse response = toResponse(property);
+
+            PropertyResponse response = PropertyResponseMapper.toResponse(property);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
         } catch (IllegalArgumentException e) {
@@ -64,7 +65,7 @@ public class PropertyController implements PropertySwaggerApi {
     public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable Long id) {
         try {
             PropertyModel property = propertyUseCase.findById(id);
-            return ResponseEntity.ok(toResponse(property));
+            return ResponseEntity.ok(PropertyResponseMapper.toResponse(property));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -77,7 +78,7 @@ public class PropertyController implements PropertySwaggerApi {
     public ResponseEntity<List<PropertyResponse>> getAllProperties() {
         try {
             List<PropertyResponse> properties = propertyUseCase.findAll().stream()
-                    .map(this::toResponse)
+                    .map(PropertyResponseMapper::toResponse)
                     .collect(Collectors.toList());
             return ResponseEntity.ok(properties);
         } catch (Exception e) {
@@ -104,32 +105,13 @@ public class PropertyController implements PropertySwaggerApi {
             
             // Find properties by user ID (proprietario is now a FK to users)
             List<PropertyResponse> properties = propertyUseCase.findByProprietario(userId).stream()
-                    .map(this::toResponse)
+                    .map(PropertyResponseMapper::toResponse)
                     .collect(Collectors.toList());
-            
+
             return ResponseEntity.ok(properties);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
-    
-    private PropertyResponse toResponse(PropertyModel property) {
-        return new PropertyResponse(
-            property.getId(),
-            property.getMatriculaId(),
-            property.getFolha(),
-            property.getComarca(),
-            property.getEndereco(),
-            property.getMetragem(),
-            property.getProprietario(),
-            property.getMatriculaOrigem(),
-            property.getTipo(),
-            property.getIsRegular(),
-            property.getBlockchainTxHash(),
-            property.getStatus(),
-            property.getCreatedAt(),
-            property.getUpdatedAt()
-        );
     }
 }
 

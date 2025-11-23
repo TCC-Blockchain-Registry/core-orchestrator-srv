@@ -22,7 +22,7 @@ public class PropertyModel {
     private String blockchainTxHash;  // Hash da transação na blockchain
     private String requestHash;  // V2 approval system request hash
     private String approvalStatus;  // PENDING_APPROVALS, EXECUTED
-    private String status;  // PENDING, PROCESSING, PENDING_APPROVALS, EXECUTED, FAILED
+    private PropertyStatus status;  // PENDENTE, PROCESSANDO_REGISTRO, EM_TRANSFERENCIA, OK
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -174,11 +174,11 @@ public class PropertyModel {
         this.approvalStatus = approvalStatus;
     }
     
-    public String getStatus() {
+    public PropertyStatus getStatus() {
         return status;
     }
-    
-    public void setStatus(String status) {
+
+    public void setStatus(PropertyStatus status) {
         this.status = status;
     }
     
