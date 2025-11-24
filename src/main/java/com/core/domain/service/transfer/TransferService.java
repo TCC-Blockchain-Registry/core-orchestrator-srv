@@ -44,13 +44,85 @@ public class TransferService implements TransferUseCase {
     }
 
     /**
-     * Initiates a property transfer
+     * Initiates a property transfer using buyer's CPF
+     * Validates that the authenticated user is the property owner
+     *
+     * @param authenticatedUserId ID of the authenticated user (from JWT)
+     * @param matriculaId Property to transfer
+     * @param buyerCpf Buyer's CPF (11 digits)
+     * @return Created transfer model
+     */
+    @Override
+    public TransferModel initiateTransferByCpf(Long authenticatedUserId, Long matriculaId, String buyerCpf) {
+        logger.info("Initiating transfer for property {} to buyer with CPF {} by user {}",
+            matriculaId, buyerCpf, authenticatedUserId);
+
+        // 1. Validate property exists
+        PropertyModel property = propertyRepositoryPort.findByMatriculaId(matriculaId)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found: " + matriculaId));
+
+        // 2. SECURITY CHECK: Validate authenticated user is the property owner
+        if (!property.getProprietario().equals(authenticatedUserId)) {
+            logger.warn("User {} attempted to transfer property {} owned by user {}",
+                authenticatedUserId, matriculaId, property.getProprietario());
+            throw new IllegalArgumentException("You are not the owner of this property");
+        }
+
+        // 3. Find buyer by CPF
+        UserModel buyer = userRepositoryPort.findByCpf(buyerCpf)
+                .orElseThrow(() -> new IllegalArgumentException("Buyer not found with CPF: " + buyerCpf));
+
+        logger.info("Found buyer: id={}, wallet={}", buyer.getId(), buyer.getWalletAddress());
+
+        // 4. Call the main initiate transfer logic
+        return initiateTransfer(matriculaId, buyer.getId());
+    }
+
+    /**
+     * Initiates a property transfer using buyer's wallet address
+     * Validates that the authenticated user is the property owner
+     *
+     * @param authenticatedUserId ID of the authenticated user (from JWT)
+     * @param matriculaId Property to transfer
+     * @param buyerWalletAddress Buyer's wallet address (0x...)
+     * @return Created transfer model
+     */
+    @Override
+    public TransferModel initiateTransferByWallet(Long authenticatedUserId, Long matriculaId, String buyerWalletAddress) {
+        logger.info("Initiating transfer for property {} to buyer with wallet {} by user {}",
+            matriculaId, buyerWalletAddress, authenticatedUserId);
+
+        // 1. Validate property exists
+        PropertyModel property = propertyRepositoryPort.findByMatriculaId(matriculaId)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found: " + matriculaId));
+
+        // 2. SECURITY CHECK: Validate authenticated user is the property owner
+        if (!property.getProprietario().equals(authenticatedUserId)) {
+            logger.warn("User {} attempted to transfer property {} owned by user {}",
+                authenticatedUserId, matriculaId, property.getProprietario());
+            throw new IllegalArgumentException("You are not the owner of this property");
+        }
+
+        // 3. Find buyer by wallet address
+        UserModel buyer = userRepositoryPort.findByWalletAddress(buyerWalletAddress)
+                .orElseThrow(() -> new IllegalArgumentException("Buyer not found with wallet address: " + buyerWalletAddress));
+
+        logger.info("Found buyer: id={}, cpf={}", buyer.getId(), buyer.getCpf());
+
+        // 4. Call the main initiate transfer logic
+        return initiateTransfer(matriculaId, buyer.getId());
+    }
+
+    /**
+     * Initiates a property transfer (legacy method)
      *
      * @param matriculaId Property to transfer
      * @param buyerId Buyer user ID
      * @return Created transfer model
+     * @deprecated Use initiateTransferByCpf or initiateTransferByWallet instead
      */
     @Override
+    @Deprecated
     public TransferModel initiateTransfer(Long matriculaId, Long buyerId) {
         logger.info("Initiating transfer for property {} to buyer {}", matriculaId, buyerId);
 

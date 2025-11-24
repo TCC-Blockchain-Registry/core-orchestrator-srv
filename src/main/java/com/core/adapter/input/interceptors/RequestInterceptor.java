@@ -66,7 +66,7 @@ public class RequestInterceptor implements HandlerInterceptor {
         }
         
         // Webhook endpoints (should be protected by other means, like API keys)
-        if (uri.startsWith("/api/webhook/")) {
+        if (uri.startsWith("/api/webhooks/")) {
             return true;
         }
         

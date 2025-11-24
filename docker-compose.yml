@@ -26,6 +26,7 @@ services:
 
   # Spring Boot Application
   core-orchestrator-app:
+    image: core-orchestrator-srv
     build:
       context: .
       dockerfile: Dockerfile
@@ -42,6 +43,7 @@ services:
         condition: service_healthy
     networks:
       - core-orchestrator-network
+      - property-network
 
 volumes:
   postgres_data:
@@ -50,3 +52,5 @@ volumes:
 networks:
   core-orchestrator-network:
     driver: bridge
+  property-network:
+    external: true

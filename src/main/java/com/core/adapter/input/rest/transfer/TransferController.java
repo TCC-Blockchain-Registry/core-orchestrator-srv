@@ -8,6 +8,7 @@ import com.core.adapter.input.rest.transfer.mapper.TransferResponseMapper;
 import com.core.adapter.input.rest.transfer.swagger.TransferSwaggerApi;
 import com.core.domain.model.transfer.TransferModel;
 import com.core.port.input.transfer.TransferUseCase;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,17 +34,44 @@ public class TransferController implements TransferSwaggerApi {
 
     @Override
     @PostMapping("/initiate")
-    public ResponseEntity<TransferResponse> initiateTransfer(@RequestBody InitiateTransferRequest request) {
-        logger.info("POST /api/transfers/initiate - matriculaId={}, buyerId={}",
-            request.matriculaId(), request.buyerId());
+    public ResponseEntity<TransferResponse> initiateTransfer(
+            @RequestBody InitiateTransferRequest request,
+            HttpServletRequest httpRequest) {
+
+        logger.info("POST /api/transfers/initiate - matriculaId={}, buyerCpf={}, buyerWalletAddress={}",
+            request.matriculaId(), request.buyerCpf(), request.buyerWalletAddress());
 
         try {
-            TransferModel transfer = transferUseCase.initiateTransfer(
-                request.matriculaId(),
-                request.buyerId()
-            );
+            // 1. Validate request format
+            request.validate();
 
-            logger.info("Transfer initiated successfully: id={}", transfer.getId());
+            // 2. Extract authenticated user ID from JWT token
+            Long authenticatedUserId = (Long) httpRequest.getAttribute("userId");
+            if (authenticatedUserId == null) {
+                logger.error("No authenticated user found in request");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            logger.info("Authenticated user ID from JWT: {}", authenticatedUserId);
+
+            // 3. Call appropriate service method based on buyer identification
+            TransferModel transfer;
+            if (request.buyerCpf() != null && !request.buyerCpf().isBlank()) {
+                transfer = transferUseCase.initiateTransferByCpf(
+                    authenticatedUserId,
+                    request.matriculaId(),
+                    request.buyerCpf()
+                );
+            } else {
+                transfer = transferUseCase.initiateTransferByWallet(
+                    authenticatedUserId,
+                    request.matriculaId(),
+                    request.buyerWalletAddress()
+                );
+            }
+
+            logger.info("Transfer initiated successfully: id={}, seller={}, buyer={}",
+                transfer.getId(), transfer.getSellerId(), transfer.getBuyerId());
 
             return ResponseEntity
                 .status(HttpStatus.CREATED)

@@ -11,13 +11,39 @@ import java.util.List;
 public interface TransferUseCase {
 
     /**
-     * Initiates a property transfer
+     * Initiates a property transfer (legacy method - accepts buyerId)
      *
      * @param matriculaId Property to transfer
      * @param buyerId Buyer user ID
      * @return Created transfer model
+     * @deprecated Use initiateTransferByCpf or initiateTransferByWallet instead
      */
+    @Deprecated
     TransferModel initiateTransfer(Long matriculaId, Long buyerId);
+
+    /**
+     * Initiates a property transfer using buyer's CPF
+     * Validates that the authenticated user is the property owner
+     *
+     * @param authenticatedUserId ID of the authenticated user (from JWT)
+     * @param matriculaId Property to transfer
+     * @param buyerCpf Buyer's CPF (11 digits)
+     * @return Created transfer model
+     * @throws IllegalArgumentException if buyer not found or authenticated user is not the owner
+     */
+    TransferModel initiateTransferByCpf(Long authenticatedUserId, Long matriculaId, String buyerCpf);
+
+    /**
+     * Initiates a property transfer using buyer's wallet address
+     * Validates that the authenticated user is the property owner
+     *
+     * @param authenticatedUserId ID of the authenticated user (from JWT)
+     * @param matriculaId Property to transfer
+     * @param buyerWalletAddress Buyer's wallet address (0x...)
+     * @return Created transfer model
+     * @throws IllegalArgumentException if buyer not found or authenticated user is not the owner
+     */
+    TransferModel initiateTransferByWallet(Long authenticatedUserId, Long matriculaId, String buyerWalletAddress);
 
     /**
      * Records an approver's approval for a transfer
