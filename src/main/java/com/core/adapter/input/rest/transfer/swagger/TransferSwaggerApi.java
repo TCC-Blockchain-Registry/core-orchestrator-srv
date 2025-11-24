@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -22,17 +23,21 @@ public interface TransferSwaggerApi {
 
     @Operation(
         summary = "Initiate a property transfer",
-        description = "Creates a transfer request and publishes CONFIGURE_TRANSFER job to blockchain"
+        description = "Creates a transfer request and publishes CONFIGURE_TRANSFER job to blockchain. " +
+                      "Validates that the authenticated user (from JWT) is the property owner. " +
+                      "Buyer is identified by CPF or wallet address (provide only one)."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Transfer initiated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data (missing buyer info, invalid format, or user is not owner)"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - no valid JWT token"),
         @ApiResponse(responseCode = "409", description = "Property already has an active transfer or invalid state"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     ResponseEntity<TransferResponse> initiateTransfer(
-        @RequestBody(description = "Transfer initiation data", required = true)
-        InitiateTransferRequest request
+        @RequestBody(description = "Transfer initiation data (matriculaId + buyerCpf OR buyerWalletAddress)", required = true)
+        InitiateTransferRequest request,
+        @Parameter(hidden = true) HttpServletRequest httpRequest
     );
 
     @Operation(

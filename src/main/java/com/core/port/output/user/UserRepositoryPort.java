@@ -43,6 +43,14 @@ public interface UserRepositoryPort {
     Optional<UserModel> findByWalletAddress(String walletAddress);
 
     /**
+     * Find a user by CPF (Brazilian tax ID)
+     *
+     * @param cpf The CPF to search for (11 digits, no formatting)
+     * @return Optional containing the user if found, empty otherwise
+     */
+    Optional<UserModel> findByCpf(String cpf);
+
+    /**
      * Find all users
      *
      * @return List of all users in the system

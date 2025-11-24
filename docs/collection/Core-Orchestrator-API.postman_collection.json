@@ -1,293 +1,415 @@
 {
 	"info": {
-		"_postman_id": "core-orchestrator-api",
-		"name": "Core Orchestrator API - Complete",
-		"description": "Collection completa de requisições para a API Core Orchestrator Service - Sistema de Registro de Propriedades com Blockchain",
+		"_postman_id": "core-orchestrator-api-v2",
+		"name": "Core Orchestrator API (V2 - Atualizado)",
+		"description": "API do Core Orchestrator - Backend principal com lógica de negócio e integração com blockchain via RabbitMQ\n\n## Arquitetura\n- Spring Boot 3.3.5 + PostgreSQL\n- Autenticação JWT\n- Queue async para blockchain (RabbitMQ)\n- Webhooks para sincronização com blockchain\n\n## Variáveis\nConfigure no Environment:\n- `baseUrl`: http://localhost:8080\n- `jwt_token`: Token JWT (obtido no login)\n- `userId`: ID do usuário\n- `propertyId`: ID da propriedade\n- `transferId`: ID da transferência\n- `matriculaId`: Matrícula da propriedade",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"version": "2.0.0"
 	},
 	"item": [
 		{
-			"name": "Authentication & Users",
+			"name": "Users",
 			"item": [
 				{
-					"name": "Register User (Normal)",
+					"name": "Register User",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-					"body": {
-						"mode": "raw",
-						"raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha123\",\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\"\n}"
-					},
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cpf\": \"12345678900\",\n  \"nome\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"senha\": \"senha123\",\n  \"walletAddress\": \"0x3b59b80bef76afce7d0a0d19eeef73045a87816c\"\n}"
+						},
 						"url": {
-							"raw": "{{base_url}}/api/users/register",
-							"host": ["{{base_url}}"],
+							"raw": "{{baseUrl}}/api/users/register",
+							"host": ["{{baseUrl}}"],
 							"path": ["api", "users", "register"]
 						},
-						"description": "Registra um novo usuário normal (role: USER). Se o campo 'role' não for informado, o padrão é USER."
-					},
-					"response": []
+						"description": "Registra novo usuário no sistema"
+					}
 				},
 				{
-					"name": "Register User (Admin)",
+					"name": "Login",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-					"body": {
-						"mode": "raw",
-						"raw": "{\n  \"name\": \"Maria Admin\",\n  \"email\": \"maria@admin.com\",\n  \"password\": \"senha123\",\n  \"walletAddress\": \"0x1234567890abcdef1234567890abcdef12345678\",\n  \"role\": \"ADMIN\"\n}"
-					},
-						"url": {
-							"raw": "{{base_url}}/api/users/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "register"]
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cpf\": \"12345678900\",\n  \"senha\": \"senha123\"\n}"
 						},
-						"description": "Registra um novo usuário com role ADMIN."
-					},
-					"response": []
+						"url": {
+							"raw": "{{baseUrl}}/api/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "login"]
+						},
+						"description": "Autentica usuário e retorna JWT token"
+					}
 				},
 				{
-					"name": "Login User",
+					"name": "List Users",
 					"request": {
-						"method": "POST",
+						"method": "GET",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
+						},
+						"description": "Lista todos os usuários (requer autenticação)"
+					}
+				},
+				{
+					"name": "Update Wallet",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha123\"\n}"
+							"raw": "{\n  \"walletAddress\": \"0x1f5c1eb46d627c1fc6d426f0979784331b0b29e7\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/users/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "login"]
+							"raw": "{{baseUrl}}/api/users/{{userId}}/wallet",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "{{userId}}", "wallet"]
 						},
-						"description": "Faz login com email e senha. Retorna os dados do usuário incluindo o role."
-					},
-					"response": []
+						"description": "Atualiza endereço da wallet do usuário"
+					}
 				},
 				{
-					"name": "Login Admin (Default)",
+					"name": "Get My Profile",
 					"request": {
-						"method": "POST",
+						"method": "GET",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@core-orchestrator.com\",\n  \"password\": \"admin123\"\n}"
-						},
 						"url": {
-							"raw": "{{base_url}}/api/users/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "login"]
+							"raw": "{{baseUrl}}/api/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "me"]
 						},
-						"description": "Login com o usuário admin padrão criado automaticamente ao iniciar a aplicação."
-					},
-					"response": []
+						"description": "Obtém perfil do usuário autenticado"
+					}
 				}
-			],
-			"description": "Endpoints relacionados a autenticação e gerenciamento de usuários."
+			]
 		},
 		{
-			"name": "Property Management",
+			"name": "Properties",
 			"item": [
 				{
 					"name": "Register Property",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"matriculaId\": 123456,\n  \"folha\": 100,\n  \"comarca\": \"São Paulo\",\n  \"endereco\": \"Rua Example, 123 - Centro\",\n  \"metragem\": 250,\n  \"proprietario\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\",\n  \"matriculaOrigem\": null,\n  \"tipo\": \"URBANO\",\n  \"isRegular\": true\n}"
+							"raw": "{\n  \"matriculaId\": 456,\n  \"proprietarioId\": 2,\n  \"endereco\": \"Rua Example, 123\",\n  \"area\": 250.5,\n  \"valorVenal\": 500000.00\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/properties/register",
-							"host": ["{{base_url}}"],
+							"raw": "{{baseUrl}}/api/properties/register",
+							"host": ["{{baseUrl}}"],
 							"path": ["api", "properties", "register"]
 						},
-						"description": "Registra uma nova propriedade no sistema. O proprietário deve ser um endereço Ethereum válido (0x...)."
-					},
-					"response": []
+						"description": "Registra propriedade - publica job para blockchain via RabbitMQ"
+					}
 				},
 				{
-					"name": "Get Property by ID",
+					"name": "Get Property",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/properties/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "properties", "1"]
+							"raw": "{{baseUrl}}/api/properties/{{propertyId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "properties", "{{propertyId}}"]
 						},
-						"description": "Busca uma propriedade específica por ID."
-					},
-					"response": []
+						"description": "Obtém detalhes de uma propriedade"
+					}
 				},
 				{
-					"name": "Get All Properties",
+					"name": "List All Properties",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/properties",
-							"host": ["{{base_url}}"],
+							"raw": "{{baseUrl}}/api/properties",
+							"host": ["{{baseUrl}}"],
 							"path": ["api", "properties"]
 						},
-						"description": "Lista todas as propriedades registradas no sistema."
-					},
-					"response": []
+						"description": "Lista todas as propriedades"
+					}
 				},
 				{
-					"name": "Get Properties by Owner",
+					"name": "Get My Properties",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/properties/by-proprietario/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-							"host": ["{{base_url}}"],
-							"path": [
-								"api",
-								"properties",
-								"by-proprietario",
-								"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
-							]
+							"raw": "{{baseUrl}}/api/properties/my-properties",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "properties", "my-properties"]
 						},
-						"description": "Busca todas as propriedades de um proprietário específico (endereço Ethereum)."
-					},
-					"response": []
+						"description": "Lista propriedades do usuário autenticado"
+					}
 				}
-			],
-			"description": "Endpoints para gerenciamento de propriedades: registro, consulta e listagem."
+			]
 		},
 		{
-			"name": "Property Transfer",
+			"name": "Transfers",
 			"item": [
 				{
 					"name": "Initiate Transfer",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"propertyId\": 1,\n  \"fromProprietario\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb\",\n  \"toProprietario\": \"0x123d35Cc6634C0532925a3b844Bc9e7595f0aaa\"\n}"
+							"raw": "{\n  \"matriculaId\": 456,\n  \"sellerId\": 2,\n  \"buyerId\": 3\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/property-transfers/initiate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "property-transfers", "initiate"]
+							"raw": "{{baseUrl}}/api/transfers/initiate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers", "initiate"]
 						},
-						"description": "Inicia uma transferência de propriedade.\n\nRegras:\n- Propriedade deve existir\n- fromProprietario deve ser o dono atual\n- Propriedade NÃO pode ter transferência ativa (PENDING ou APPROVED)\n\nRetorna 409 CONFLICT se já houver transferência ativa."
-					},
-					"response": []
+						"description": "Inicia transferência de propriedade - publica job para blockchain"
+					}
 				},
 				{
-					"name": "Approve Transfer",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/property-transfers/1/approve",
-							"host": ["{{base_url}}"],
-							"path": ["api", "property-transfers", "1", "approve"]
-						},
-						"description": "Aprova uma transferência pendente. Muda status de PENDING para APPROVED."
-					},
-					"response": []
-				},
-				{
-					"name": "Complete Transfer (Blockchain)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"blockchainTxHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/property-transfers/1/complete",
-							"host": ["{{base_url}}"],
-							"path": ["api", "property-transfers", "1", "complete"]
-						},
-						"description": "Completa a transferência após registro na blockchain.\n\nO que acontece:\n1. Transferência muda para status COMPLETED\n2. Proprietário da propriedade é atualizado\n3. Hash da transação blockchain é salvo"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Transfers",
+					"name": "Get Transfer",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/property-transfers",
-							"host": ["{{base_url}}"],
-							"path": ["api", "property-transfers"]
+							"raw": "{{baseUrl}}/api/transfers/{{transferId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers", "{{transferId}}"]
 						},
-						"description": "Lista todas as transferências de propriedades do sistema."
-					},
-					"response": []
+						"description": "Obtém detalhes de uma transferência"
+					}
 				},
 				{
 					"name": "Get Transfers by Property",
 					"request": {
 						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/transfers/property/{{matriculaId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers", "property", "{{matriculaId}}"]
+						},
+						"description": "Lista transferências de uma propriedade"
+					}
+				},
+				{
+					"name": "Approve Transfer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approved\": true,\n  \"observations\": \"Aprovado\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transfers/{{transferId}}/approve",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers", "{{transferId}}", "approve"]
+						},
+						"description": "Aprova transferência (Cartório/Prefeitura/IF)"
+					}
+				},
+				{
+					"name": "Accept Transfer (Buyer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/transfers/{{transferId}}/accept",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers", "{{transferId}}", "accept"]
+						},
+						"description": "Comprador aceita a transferência"
+					}
+				},
+				{
+					"name": "List All Transfers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/transfers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transfers"]
+						},
+						"description": "Lista todas as transferências"
+					}
+				}
+			]
+		},
+		{
+			"name": "Webhooks (Internal)",
+			"item": [
+				{
+					"name": "Property Registered (Webhook)",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transactionHash\": \"0x...\",\n  \"blockNumber\": 12345,\n  \"status\": \"SUCCESS\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/blockchain/properties/{{propertyId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "webhooks", "blockchain", "properties", "{{propertyId}}"]
+						},
+						"description": "Webhook do offchain-consumer após registro na blockchain"
+					}
+				},
+				{
+					"name": "Transfer Configured (Webhook)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transferId\": 6,\n  \"transactionHash\": \"0x...\",\n  \"blockNumber\": 12346\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/blockchain/properties/transfer-configured",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "webhooks", "blockchain", "properties", "transfer-configured"]
+						},
+						"description": "Webhook após configuração de transferência na blockchain"
+					}
+				},
+				{
+					"name": "Transfer Executed (Webhook)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transferId\": 6,\n  \"transactionHash\": \"0x...\",\n  \"blockNumber\": 12347\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/blockchain/properties/transferred",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "webhooks", "blockchain", "properties", "transferred"]
+						},
+						"description": "Webhook após execução de transferência na blockchain"
+					}
+				},
+				{
+					"name": "Update Transfer (Webhook)",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"CONCLUIDA\",\n  \"transactionHash\": \"0x...\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/blockchain/transfers/{{transferId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "webhooks", "blockchain", "transfers", "{{transferId}}"]
+						},
+						"description": "Webhook para atualizar status de transferência"
+					}
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/property-transfers/by-property/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "property-transfers", "by-property", "1"]
-						},
-						"description": "Lista todo o histórico de transferências de uma propriedade específica (incluindo PENDING, APPROVED, COMPLETED, etc)."
-					},
-					"response": []
+							"raw": "{{baseUrl}}/api/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "health"]
+						}
+					}
+				},
+				{
+					"name": "Ping",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/health/ping",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "health", "ping"]
+						}
+					}
+				},
+				{
+					"name": "Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/health/info",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "health", "info"]
+						}
+					}
 				}
-			],
-			"description": "Endpoints para gerenciamento de transferências de propriedades.\n\nFluxo completo:\n1. Initiate Transfer (cria com status PENDING)\n2. Approve Transfer (muda para APPROVED)\n3. Complete Transfer (registra na blockchain e muda para COMPLETED)"
+			]
 		}
 	],
 	"variable": [
 		{
-			"key": "base_url",
-			"value": "http://localhost:8080",
-			"type": "string"
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "jwt_token",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": "1"
+		},
+		{
+			"key": "propertyId",
+			"value": "1"
+		},
+		{
+			"key": "transferId",
+			"value": "1"
+		},
+		{
+			"key": "matriculaId",
+			"value": "456"
 		}
 	]
 }

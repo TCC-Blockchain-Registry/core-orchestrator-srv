@@ -104,6 +104,17 @@ public class PropertyService implements PropertyUseCase {
         logger.info("📝 Property registered in database: matriculaId={}, id={}",
             matriculaId, savedProperty.getId());
 
+        // Retrieve user to get wallet address for blockchain transaction
+        var user = userRepositoryPort.findById(proprietario)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + proprietario));
+
+        String walletAddress = user.getWalletAddress();
+        if (walletAddress == null || walletAddress.trim().isEmpty()) {
+            throw new IllegalArgumentException("User " + proprietario + " does not have a wallet address configured");
+        }
+
+        logger.info("🔐 Retrieved wallet address for user {}: {}", proprietario, walletAddress);
+
         // Publish blockchain job asynchronously
         try {
             String jobId = jobPublisherPort.publishRegisterPropertyJob(
@@ -113,7 +124,7 @@ public class PropertyService implements PropertyUseCase {
                 comarca,
                 endereco,
                 String.valueOf(metragem),
-                String.valueOf(proprietario), // Convert Long (userId) to String
+                walletAddress, // Send wallet address instead of user ID
                 String.valueOf(matriculaOrigem != null ? matriculaOrigem : 0),
                 tipo.ordinal(), // Convert enum to integer
                 isRegular

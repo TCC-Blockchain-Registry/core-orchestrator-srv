@@ -101,6 +101,24 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Optional<UserModel> findByCpf(String cpf) {
+        Session session = sessionFactory.openSession();
+
+        try {
+            String hql = "FROM UserEntity u WHERE u.cpf = :cpf";
+            UserEntity entity = session.createQuery(hql, UserEntity.class)
+                    .setParameter("cpf", cpf)
+                    .uniqueResult();
+
+            return entity != null ? Optional.of(mapper.toDomain(entity)) : Optional.empty();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find user by CPF", e);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
     public List<UserModel> findAll() {
         Session session = sessionFactory.openSession();
         
