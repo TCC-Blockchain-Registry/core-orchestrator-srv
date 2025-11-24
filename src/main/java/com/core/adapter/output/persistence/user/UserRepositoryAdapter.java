@@ -87,7 +87,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
         Session session = sessionFactory.openSession();
 
         try {
-            String hql = "FROM UserEntity u WHERE u.walletAddress = :walletAddress";
+            String hql = "FROM UserEntity u WHERE LOWER(u.walletAddress) = LOWER(:walletAddress)";
             UserEntity entity = session.createQuery(hql, UserEntity.class)
                     .setParameter("walletAddress", walletAddress)
                     .uniqueResult();

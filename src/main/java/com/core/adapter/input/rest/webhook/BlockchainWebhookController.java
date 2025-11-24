@@ -144,8 +144,8 @@ public class BlockchainWebhookController {
         }
 
         try {
-            // Update property with requestHash
-            propertyService.updateRequestHash(request.getMatriculaId(), request.getRequestHash(), "PENDING_APPROVALS");
+            // Update property with requestHash (using matriculaId from webhook)
+            propertyService.updateRequestHashByMatricula(request.getMatriculaId(), request.getRequestHash(), "PENDING_APPROVALS");
 
             logger.info("✅ Property {} registration request recorded with hash {}",
                 request.getMatriculaId(), request.getRequestHash());
@@ -172,8 +172,8 @@ public class BlockchainWebhookController {
         }
 
         try {
-            // Update property status to EXECUTED
-            propertyService.updateRequestHash(request.getMatriculaId(), request.getRequestHash(), "EXECUTED");
+            // Update property status to EXECUTED (using matriculaId from webhook)
+            propertyService.updateRequestHashByMatricula(request.getMatriculaId(), request.getRequestHash(), "EXECUTED");
 
             logger.info("✅ Property {} registration executed successfully",
                 request.getMatriculaId());
@@ -230,13 +230,21 @@ public class BlockchainWebhookController {
         }
 
         try {
-            // Set status to EM_TRANSFERENCIA
+            // Update transfer record with requestHash and txHash
+            transferService.updateRequestHashByMatriculaId(
+                request.getMatriculaId(),
+                request.getTransferHash(),
+                request.getTransactionHash()
+            );
+
+            // Set property status to EM_TRANSFERENCIA
             propertyService.initiateTransfer(request.getMatriculaId());
 
-            logger.info("✅ Property {} status updated to EM_TRANSFERENCIA", request.getMatriculaId());
+            logger.info("✅ Transfer configured for property {}: requestHash={}, txHash={}",
+                request.getMatriculaId(), request.getTransferHash(), request.getTransactionHash());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            logger.error("❌ Failed to update property {} status: {}",
+            logger.error("❌ Failed to update transfer for property {}: {}",
                 request.getMatriculaId(), e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
@@ -257,10 +265,15 @@ public class BlockchainWebhookController {
         }
 
         try {
-            // Update transfer status to PENDING_APPROVALS
-            // Note: This assumes there's a transfer entity with the transferHash
-            logger.info("✅ Transfer request recorded for property {} with hash {}",
-                request.getMatriculaId(), request.getTransferHash());
+            // Update transfer record with requestHash and txHash
+            transferService.updateRequestHashByMatriculaId(
+                request.getMatriculaId(),
+                request.getTransferHash(),
+                request.getTransactionHash()
+            );
+
+            logger.info("✅ Transfer request recorded for property {}: requestHash={}, txHash={}",
+                request.getMatriculaId(), request.getTransferHash(), request.getTransactionHash());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("❌ Failed to record transfer request for property {}: {}",
@@ -325,6 +338,235 @@ public class BlockchainWebhookController {
         }
     }
 
+    @PostMapping("/properties/issued")
+    @Operation(summary = "Notificar que tokens foram emitidos para uma propriedade")
+    public ResponseEntity<Void> handlePropertyIssued(
+            @RequestBody PropertyIssuedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Property issued {} to owner {}",
+            request.getMatricula(), request.getOwner());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            propertyService.markAsIssued(Long.parseLong(request.getMatricula()), request.getOwner());
+            logger.info("✅ Property {} marked as issued", request.getMatricula());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to mark property {} as issued: {}", request.getMatricula(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/properties/frozen")
+    @Operation(summary = "Notificar alteração de status de congelamento de propriedade")
+    public ResponseEntity<Void> handlePropertyFrozen(
+            @RequestBody PropertyFrozenRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Property {} frozen status: {}",
+            request.getMatricula(), request.getFrozen());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            propertyService.updateFrozenStatus(Long.parseLong(request.getMatricula()), request.getFrozen());
+            logger.info("✅ Property {} frozen status updated", request.getMatricula());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update frozen status for property {}: {}",
+                request.getMatricula(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/properties/registration-approved")
+    @Operation(summary = "Notificar aprovação de registro de propriedade")
+    public ResponseEntity<Void> handleRegistrationApproved(
+            @RequestBody RegistrationApprovedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Registration approved by {} - {}",
+            request.getInstitution(), request.getApprover());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            propertyService.recordRegistrationApproval(
+                request.getRequestHash(),
+                request.getInstitution(),
+                request.getApprover()
+            );
+            logger.info("✅ Registration approval recorded for hash {}", request.getRequestHash());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to record registration approval: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/transfers/transfer-approved")
+    @Operation(summary = "Notificar aprovação de transferência")
+    public ResponseEntity<Void> handleTransferApproved(
+            @RequestBody TransferApprovedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Transfer approved by {} - {}",
+            request.getInstitution(), request.getApprover());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            transferService.recordTransferApproval(
+                request.getRequestHash(),
+                request.getInstitution(),
+                request.getApprover()
+            );
+            logger.info("✅ Transfer approval recorded for hash {}", request.getRequestHash());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to record transfer approval: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/properties/registered")
+    @Operation(summary = "Notificar registro de propriedade no módulo de compliance")
+    public ResponseEntity<Void> handlePropertyRegistered(
+            @RequestBody PropertyRegisteredRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Property registered {} by {}",
+            request.getMatricula(), request.getProprietario());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            propertyService.updateRegistryData(Long.parseLong(request.getMatricula()), request);
+            logger.info("✅ Property {} registry data updated", request.getMatricula());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update registry data for property {}: {}",
+                request.getMatricula(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/properties/updated")
+    @Operation(summary = "Notificar atualização de propriedade")
+    public ResponseEntity<Void> handlePropertyUpdated(
+            @RequestBody PropertyUpdatedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Property {} updated", request.getMatricula());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            propertyService.updateRegularStatus(
+                Long.parseLong(request.getMatricula()),
+                request.getIsRegular()
+            );
+            logger.info("✅ Property {} regularity updated", request.getMatricula());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to update property {}: {}",
+                request.getMatricula(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/approvals/approved")
+    @Operation(summary = "Notificar aprovação registrada no módulo de aprovações")
+    public ResponseEntity<Void> handleApprovalRecorded(
+            @RequestBody ApprovalRecordedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Approval recorded for transfer {}",
+            request.getTransferHash());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            transferService.recordApprovalProgress(request.getTransferHash(), request);
+            logger.info("✅ Approval progress recorded for hash {}", request.getTransferHash());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to record approval progress: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/approvals/buyer-accepted")
+    @Operation(summary = "Notificar aceitação do comprador")
+    public ResponseEntity<Void> handleBuyerAccepted(
+            @RequestBody BuyerAcceptedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Buyer {} accepted transfer {}",
+            request.getBuyer(), request.getTransferHash());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            transferService.recordBuyerAcceptance(request.getTransferHash(), request.getBuyer());
+            logger.info("✅ Buyer acceptance recorded for hash {}", request.getTransferHash());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to record buyer acceptance: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/approvals/config-cleared")
+    @Operation(summary = "Notificar limpeza de configuração de transferência")
+    public ResponseEntity<Void> handleTransferConfigCleared(
+            @RequestBody TransferConfigClearedRequest request,
+            @RequestHeader(value = "X-Api-Key", required = false) String apiKey
+    ) {
+        logger.info("📨 Webhook received: Transfer config cleared for {}",
+            request.getTransferHash());
+
+        if (!isValidApiKey(apiKey)) {
+            logger.warn("⛔ Unauthorized webhook call: Invalid or missing API key");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            transferService.clearTransferConfig(request.getTransferHash());
+            logger.info("✅ Transfer config cleared for hash {}", request.getTransferHash());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("❌ Failed to clear transfer config: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // DTO classes for webhook requests
 
     public static class PropertyTransferredRequest {
@@ -348,12 +590,16 @@ public class BlockchainWebhookController {
 
     public static class TransferConfiguredRequest {
         private Long matriculaId;
+        private String transferHash;  // Request hash from blockchain (approval request)
         private String seller;
         private String buyer;
         private String transactionHash;
 
         public Long getMatriculaId() { return matriculaId; }
         public void setMatriculaId(Long matriculaId) { this.matriculaId = matriculaId; }
+
+        public String getTransferHash() { return transferHash; }
+        public void setTransferHash(String transferHash) { this.transferHash = transferHash; }
 
         public String getSeller() { return seller; }
         public void setSeller(String seller) { this.seller = seller; }
@@ -444,6 +690,165 @@ public class BlockchainWebhookController {
 
         public String getTo() { return to; }
         public void setTo(String to) { this.to = to; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class PropertyIssuedRequest {
+        private String matricula;
+        private String owner;
+        private String transactionHash;
+
+        public String getMatricula() { return matricula; }
+        public void setMatricula(String matricula) { this.matricula = matricula; }
+
+        public String getOwner() { return owner; }
+        public void setOwner(String owner) { this.owner = owner; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class PropertyFrozenRequest {
+        private String matricula;
+        private Boolean frozen;
+        private String transactionHash;
+
+        public String getMatricula() { return matricula; }
+        public void setMatricula(String matricula) { this.matricula = matricula; }
+
+        public Boolean getFrozen() { return frozen; }
+        public void setFrozen(Boolean frozen) { this.frozen = frozen; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class RegistrationApprovedRequest {
+        private String requestHash;
+        private String institution;
+        private String approver;
+        private String transactionHash;
+
+        public String getRequestHash() { return requestHash; }
+        public void setRequestHash(String requestHash) { this.requestHash = requestHash; }
+
+        public String getInstitution() { return institution; }
+        public void setInstitution(String institution) { this.institution = institution; }
+
+        public String getApprover() { return approver; }
+        public void setApprover(String approver) { this.approver = approver; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class TransferApprovedRequest {
+        private String requestHash;
+        private String institution;
+        private String approver;
+        private String transactionHash;
+
+        public String getRequestHash() { return requestHash; }
+        public void setRequestHash(String requestHash) { this.requestHash = requestHash; }
+
+        public String getInstitution() { return institution; }
+        public void setInstitution(String institution) { this.institution = institution; }
+
+        public String getApprover() { return approver; }
+        public void setApprover(String approver) { this.approver = approver; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class PropertyRegisteredRequest {
+        private String matricula;
+        private String proprietario;
+        private String folha;
+        private String comarca;
+        private String endereco;
+        private String metragem;
+        private String tipo;
+        private Boolean isRegular;
+        private String transactionHash;
+
+        public String getMatricula() { return matricula; }
+        public void setMatricula(String matricula) { this.matricula = matricula; }
+
+        public String getProprietario() { return proprietario; }
+        public void setProprietario(String proprietario) { this.proprietario = proprietario; }
+
+        public String getFolha() { return folha; }
+        public void setFolha(String folha) { this.folha = folha; }
+
+        public String getComarca() { return comarca; }
+        public void setComarca(String comarca) { this.comarca = comarca; }
+
+        public String getEndereco() { return endereco; }
+        public void setEndereco(String endereco) { this.endereco = endereco; }
+
+        public String getMetragem() { return metragem; }
+        public void setMetragem(String metragem) { this.metragem = metragem; }
+
+        public String getTipo() { return tipo; }
+        public void setTipo(String tipo) { this.tipo = tipo; }
+
+        public Boolean getIsRegular() { return isRegular; }
+        public void setIsRegular(Boolean isRegular) { this.isRegular = isRegular; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class PropertyUpdatedRequest {
+        private String matricula;
+        private Boolean isRegular;
+        private String transactionHash;
+
+        public String getMatricula() { return matricula; }
+        public void setMatricula(String matricula) { this.matricula = matricula; }
+
+        public Boolean getIsRegular() { return isRegular; }
+        public void setIsRegular(Boolean isRegular) { this.isRegular = isRegular; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class ApprovalRecordedRequest {
+        private String transferHash;
+        private String transactionHash;
+
+        public String getTransferHash() { return transferHash; }
+        public void setTransferHash(String transferHash) { this.transferHash = transferHash; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class BuyerAcceptedRequest {
+        private String transferHash;
+        private String buyer;
+        private String transactionHash;
+
+        public String getTransferHash() { return transferHash; }
+        public void setTransferHash(String transferHash) { this.transferHash = transferHash; }
+
+        public String getBuyer() { return buyer; }
+        public void setBuyer(String buyer) { this.buyer = buyer; }
+
+        public String getTransactionHash() { return transactionHash; }
+        public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    }
+
+    public static class TransferConfigClearedRequest {
+        private String transferHash;
+        private String transactionHash;
+
+        public String getTransferHash() { return transferHash; }
+        public void setTransferHash(String transferHash) { this.transferHash = transferHash; }
 
         public String getTransactionHash() { return transactionHash; }
         public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
